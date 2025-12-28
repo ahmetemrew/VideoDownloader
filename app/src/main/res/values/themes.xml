@@ -1,26 +1,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme - FORCED DARK -->
-    <style name="Theme.VideoDownloader" parent="Theme.Material3.Dark.NoActionBar">
+    <!-- Base application theme - LIGHT THEME -->
+    <style name="Theme.VideoDownloader" parent="Theme.Material3.Light.NoActionBar">
         <!-- Primary brand color -->
-        <item name="colorPrimary">@color/purple_200</item>
+        <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorOnPrimary">@color/white</item>
         
         <!-- Secondary brand color -->
-        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondary">@color/teal_700</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorOnSecondary">@color/white</item>
         
         <!-- Background and surface -->
-        <item name="android:colorBackground">@color/background_dark</item>
-        <item name="colorSurface">@color/surface_dark</item>
-        <item name="colorOnBackground">@color/white</item>
-        <item name="colorOnSurface">@color/white</item>
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnBackground">@color/text_primary</item>
+        <item name="colorOnSurface">@color/text_primary</item>
         
         <!-- Status bar -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@color/background_dark</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:navigationBarColor">@color/surface_light</item>
+        <item name="android:windowLightStatusBar">true</item>
         
         <!-- Bottom Navigation -->
         <item name="bottomNavigationStyle">@style/Widget.VideoDownloader.BottomNavigation</item>
@@ -28,17 +28,17 @@
     
     <!-- Bottom Navigation Style -->
     <style name="Widget.VideoDownloader.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
-        <item name="backgroundTint">@color/surface_dark</item>
-        <item name="itemIconTint">@color/bottom_nav_item_color_dark</item>
-        <item name="itemTextColor">@color/bottom_nav_item_color_dark</item>
+        <item name="backgroundTint">@color/surface_light</item>
+        <item name="itemIconTint">@color/bottom_nav_item_color</item>
+        <item name="itemTextColor">@color/bottom_nav_item_color</item>
         <item name="labelVisibilityMode">labeled</item>
     </style>
     
     <!-- Card Style -->
     <style name="Widget.VideoDownloader.Card" parent="Widget.Material3.CardView.Elevated">
         <item name="cardCornerRadius">16dp</item>
-        <item name="cardElevation">4dp</item>
-        <item name="cardBackgroundColor">@color/surface_elevated_dark</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardBackgroundColor">@color/surface_light</item>
     </style>
     
     <!-- Button Styles -->

@@ -144,43 +144,6 @@
 
         </LinearLayout>
 
-        <!-- Appearance Section -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Görünüm"
-            android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
-            android:textColor="@color/primary"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Theme -->
-        <LinearLayout
-            android:id="@+id/setting_theme"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/setting_theme"
-                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                android:textColor="@color/text_primary" />
-
-            <TextView
-                android:id="@+id/theme_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/theme_system"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:textColor="@color/text_secondary" />
-
-        </LinearLayout>
 
         <!-- About Section -->
         <TextView

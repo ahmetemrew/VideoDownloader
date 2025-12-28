@@ -52,11 +52,6 @@ class SettingsFragment : Fragment() {
             showQualityDialog()
         }
 
-        // Tema seçimi
-        binding.settingTheme.setOnClickListener {
-            showThemeDialog()
-        }
-
         // Auto-paste switch
         binding.switchAutoPaste.setOnCheckedChangeListener { _, isChecked ->
             appPreferences.autoPasteEnabled = isChecked
@@ -73,7 +68,6 @@ class SettingsFragment : Fragment() {
         binding.switchAutoPaste.isChecked = appPreferences.autoPasteEnabled
         binding.switchNotifications.isChecked = appPreferences.notificationsEnabled
         updateQualityDisplay()
-        updateThemeDisplay()
         updateStats()
     }
 
@@ -108,33 +102,6 @@ class SettingsFragment : Fragment() {
     private fun updateQualityDisplay() {
         val quality = appPreferences.defaultQuality
         binding.qualityValue.text = "${quality.label} (${quality.resolution})"
-    }
-
-    private fun showThemeDialog() {
-        val themes = arrayOf(
-            getString(R.string.theme_light),
-            getString(R.string.theme_dark),
-            getString(R.string.theme_system)
-        )
-
-        AlertDialog.Builder(requireContext())
-            .setTitle(R.string.setting_theme)
-            .setSingleChoiceItems(themes, appPreferences.theme) { dialog, which ->
-                appPreferences.theme = which
-                updateThemeDisplay()
-                dialog.dismiss()
-                Toast.makeText(context, "Tema değişikliği uygulama yeniden başlatıldığında etkin olacak", Toast.LENGTH_LONG).show()
-            }
-            .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
-    }
-
-    private fun updateThemeDisplay() {
-        binding.themeValue.text = when (appPreferences.theme) {
-            AppPreferences.THEME_LIGHT -> getString(R.string.theme_light)
-            AppPreferences.THEME_DARK -> getString(R.string.theme_dark)
-            else -> getString(R.string.theme_system)
-        }
     }
 
     override fun onDestroyView() {

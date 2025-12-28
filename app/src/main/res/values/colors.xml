@@ -9,13 +9,14 @@
     <color name="secondary_variant">#018786</color>
     <color name="on_secondary">#000000</color>
     
-    <!-- Background Colors -->
+    <!-- Background Colors (Light Theme) -->
     <color name="background">#FFFFFF</color>
     <color name="surface">#FFFFFF</color>
+    <color name="surface_light">#F5F5F5</color>
     <color name="on_background">#000000</color>
     <color name="on_surface">#000000</color>
     
-    <!-- Dark Theme Colors -->
+    <!-- Dark Theme Colors (not used but kept for compatibility) -->
     <color name="background_dark">#121212</color>
     <color name="surface_dark">#1E1E1E</color>
     <color name="surface_elevated_dark">#2D2D2D</color>
@@ -47,16 +48,16 @@
     <color name="error">#F44336</color>
     <color name="info">#2196F3</color>
     
-    <!-- Text Colors (Dark Theme - Light text on dark background) -->
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#B3FFFFFF</color>
-    <color name="text_hint">#80FFFFFF</color>
-    <color name="text_disabled">#4DFFFFFF</color>
+    <!-- Text Colors (Light Theme - Dark text on light background) -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#9E9E9E</color>
+    <color name="text_disabled">#BDBDBD</color>
     
-    <!-- UI Colors (Dark Theme) -->
-    <color name="divider">#2D2D2D</color>
-    <color name="card_background">#1E1E1E</color>
-    <color name="ripple">#1FFFFFFF</color>
+    <!-- UI Colors (Light Theme) -->
+    <color name="divider">#E0E0E0</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="ripple">#1F000000</color>
     
     <!-- Download Progress Colors -->
     <color name="progress_background">#E0E0E0</color>
