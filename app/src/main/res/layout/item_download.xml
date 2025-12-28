@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/download_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <!-- Thumbnail -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="80dp"
+            android:layout_height="60dp"
+            app:cardCornerRadius="8dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/thumbnail"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:background="@color/card_background"
+                    tools:ignore="ContentDescription" />
+
+                <!-- Platform Badge -->
+                <ImageView
+                    android:id="@+id/platform_badge"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="4dp"
+                    android:src="@drawable/ic_instagram"
+                    tools:ignore="ContentDescription" />
+
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp"
+            android:layout_gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="@color/text_primary"
+                android:maxLines="2"
+                android:ellipsize="end"
+                tools:text="Video başlığı burada" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/quality"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                    android:textColor="@color/text_secondary"
+                    tools:text="720p" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="6dp"
+                    android:text="•"
+                    android:textColor="@color/text_hint" />
+
+                <TextView
+                    android:id="@+id/size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                    android:textColor="@color/text_secondary"
+                    tools:text="24.5 MB" />
+
+            </LinearLayout>
+
+            <!-- Progress Bar (for active downloads) -->
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/progress_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:trackThickness="4dp"
+                app:trackCornerRadius="2dp"
+                tools:visibility="visible"
+                tools:progress="65" />
+
+        </LinearLayout>
+
+        <!-- Status / Actions -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp">
+
+            <!-- Completed icon -->
+            <ImageView
+                android:id="@+id/status_completed"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_check_circle"
+                android:visibility="gone"
+                app:tint="@color/success"
+                tools:visibility="visible"
+                tools:ignore="ContentDescription" />
+
+            <!-- Progress text -->
+            <TextView
+                android:id="@+id/progress_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                android:textColor="@color/primary"
+                android:visibility="gone"
+                tools:text="65%" />
+
+            <!-- Error icon -->
+            <ImageView
+                android:id="@+id/status_failed"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_error"
+                android:visibility="gone"
+                app:tint="@color/error"
+                tools:ignore="ContentDescription" />
+
+            <!-- More options button -->
+            <ImageButton
+                android:id="@+id/btn_more"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                android:visibility="visible"
+                tools:ignore="ContentDescription" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

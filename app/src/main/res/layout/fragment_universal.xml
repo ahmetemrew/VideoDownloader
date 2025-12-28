@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/universal_title"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+            android:textColor="@color/text_primary"
+            android:layout_marginTop="24dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/universal_subtitle"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- URL Input Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Platform Indicator (Hidden initially) -->
+                <LinearLayout
+                    android:id="@+id/platform_indicator"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:visibility="gone"
+                    android:layout_marginBottom="12dp"
+                    tools:visibility="visible">
+
+                    <ImageView
+                        android:id="@+id/platform_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_instagram"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/platform_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        tools:text="Instagram algılandı" />
+                </LinearLayout>
+
+                <!-- URL Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/url_input_layout"
+                    style="@style/Widget.VideoDownloader.TextInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/url_hint"
+                    app:endIconMode="clear_text">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/url_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textUri"
+                        android:maxLines="3"
+                        android:imeOptions="actionDone" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Buttons Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="12dp"
+                    android:gravity="end">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_paste"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/btn_paste"
+                        app:icon="@drawable/ic_paste" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_fetch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/btn_fetch" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Loading State -->
+        <LinearLayout
+            android:id="@+id/loading_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="32dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/fetching_video"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+        </LinearLayout>
+
+        <!-- Video Preview Card (Hidden initially) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/video_preview_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Thumbnail -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp">
+
+                    <ImageView
+                        android:id="@+id/video_thumbnail"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:background="@color/card_background"
+                        tools:ignore="ContentDescription" />
+
+                    <!-- Duration Badge -->
+                    <TextView
+                        android:id="@+id/video_duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="8dp"
+                        android:background="@drawable/bg_duration_badge"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        tools:text="3:45" />
+
+                    <!-- Play Icon Overlay -->
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_play"
+                        android:alpha="0.8"
+                        tools:ignore="ContentDescription" />
+                </FrameLayout>
+
+                <!-- Video Info -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/video_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                        android:maxLines="2"
+                        android:ellipsize="end"
+                        tools:text="Amazing Video Title Here" />
+
+                    <TextView
+                        android:id="@+id/video_author"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:textColor="@color/text_secondary"
+                        tools:text="@user_name" />
+
+                    <!-- File Name Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/filename_input_layout"
+                        style="@style/Widget.VideoDownloader.TextInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:hint="@string/file_name">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/filename_input"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:maxLines="1" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Quality Selector -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/select_quality"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/quality_chips"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:singleSelection="true"
+                        app:selectionRequired="true">
+
+                        <!-- Quality chips will be added dynamically -->
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- File Size Info -->
+                    <TextView
+                        android:id="@+id/file_size_info"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:textColor="@color/text_secondary"
+                        tools:text="Tahmini boyut: 25.4 MB" />
+
+                    <!-- Download Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_download"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/btn_download"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        app:icon="@drawable/ic_download"
+                        app:iconGravity="textStart"
+                        app:cornerRadius="12dp" />
+
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Supported Platforms Info -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Desteklenen Platformlar"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:textColor="@color/text_primary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_instagram"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_tiktok"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_twitter"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_youtube"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_facebook"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_pinterest"
+                tools:ignore="ContentDescription" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

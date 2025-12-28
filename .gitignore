@@ -1,0 +1,31 @@
+# Git
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.dex
+*.class
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Android Studio
+*.jks
+*.keystore
+google-services.json
+
+# Kotlin
+*.kotlin_module
+
+# Local configuration
+local.properties
+secrets.properties

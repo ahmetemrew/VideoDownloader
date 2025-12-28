@@ -1,0 +1,113 @@
+<resources>
+    <string name="app_name">Video İndirici</string>
+    
+    <!-- Navigation -->
+    <string name="nav_universal">Evrensel</string>
+    <string name="nav_platforms">Platformlar</string>
+    <string name="nav_downloads">İndirmeler</string>
+    <string name="nav_settings">Ayarlar</string>
+    
+    <!-- Universal Fragment -->
+    <string name="universal_title">Video İndir</string>
+    <string name="universal_subtitle">Herhangi bir linki yapıştır, gerisini biz halledelim</string>
+    <string name="url_hint">Video linkini buraya yapıştır</string>
+    <string name="btn_paste">Yapıştır</string>
+    <string name="btn_fetch">Getir</string>
+    <string name="btn_download">İndir</string>
+    <string name="btn_cancel">İptal</string>
+    <string name="fetching_video">Video bilgisi alınıyor…</string>
+    <string name="platform_detected">%s algılandı</string>
+    <string name="unsupported_url">Bu link desteklenmiyor</string>
+    <string name="empty_url">Lütfen bir link girin</string>
+    <string name="invalid_url">Geçersiz link formatı</string>
+    
+    <!-- Platform Fragment -->
+    <string name="platforms_title">Platform Seç</string>
+    <string name="platforms_subtitle">İndirmek istediğin platformu seç</string>
+    
+    <!-- Video Info -->
+    <string name="video_title">Video Başlığı</string>
+    <string name="video_duration">Süre: %s</string>
+    <string name="video_author">Yükleyen: %s</string>
+    <string name="select_quality">Kalite Seç</string>
+    <string name="file_name">Dosya Adı</string>
+    <string name="file_size">Boyut: %s</string>
+    
+    <!-- Quality Options -->
+    <string name="quality_4k">4K Ultra HD (2160p)</string>
+    <string name="quality_1440p">2K QHD (1440p)</string>
+    <string name="quality_1080p">Full HD (1080p)</string>
+    <string name="quality_720p">HD (720p)</string>
+    <string name="quality_480p">SD (480p)</string>
+    <string name="quality_360p">Düşük (360p)</string>
+    <string name="quality_audio">Sadece Ses (MP3)</string>
+    
+    <!-- Downloads Fragment -->
+    <string name="downloads_title">İndirmeler</string>
+    <string name="downloads_empty">Henüz indirme yok</string>
+    <string name="downloads_empty_subtitle">Video indirdiğinde burada görünecek</string>
+    <string name="tab_active">Aktif</string>
+    <string name="tab_completed">Tamamlanan</string>
+    <string name="tab_failed">Başarısız</string>
+    
+    <!-- Download Status -->
+    <string name="status_pending">Beklemede</string>
+    <string name="status_downloading">İndiriliyor</string>
+    <string name="status_paused">Duraklatıldı</string>
+    <string name="status_completed">Tamamlandı</string>
+    <string name="status_failed">Başarısız</string>
+    <string name="download_progress">%d%%</string>
+    
+    <!-- Actions -->
+    <string name="action_delete">Sil</string>
+    <string name="action_share">Paylaş</string>
+    <string name="action_rename">Yeniden Adlandır</string>
+    <string name="action_retry">Tekrar Dene</string>
+    <string name="action_open">Aç</string>
+    <string name="action_open_folder">Klasörde Aç</string>
+    
+    <!-- Settings Fragment -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="setting_quality">Varsayılan Kalite</string>
+    <string name="setting_quality_desc">İndirmeler için varsayılan video kalitesi</string>
+    <string name="setting_location">İndirme Konumu</string>
+    <string name="setting_location_desc">Videoların kaydedileceği klasör</string>
+    <string name="setting_auto_paste">Otomatik Yapıştır</string>
+    <string name="setting_auto_paste_desc">Uygulama açıldığında panodan otomatik yapıştır</string>
+    <string name="setting_notifications">Bildirimler</string>
+    <string name="setting_notifications_desc">İndirme tamamlandığında bildirim göster</string>
+    <string name="setting_theme">Tema</string>
+    <string name="setting_theme_desc">Uygulama teması</string>
+    <string name="theme_light">Açık</string>
+    <string name="theme_dark">Koyu</string>
+    <string name="theme_system">Sistem</string>
+    <string name="setting_about">Hakkında</string>
+    <string name="setting_version">Sürüm %s</string>
+    
+    <!-- Dialogs -->
+    <string name="dialog_download_title">İndirme Ayarları</string>
+    <string name="dialog_rename_title">Yeniden Adlandır</string>
+    <string name="dialog_delete_title">Silmek istediğine emin misin?</string>
+    <string name="dialog_delete_message">Bu işlem geri alınamaz.</string>
+    <string name="dialog_confirm">Onayla</string>
+    <string name="dialog_cancel">İptal</string>
+    
+    <!-- Errors -->
+    <string name="error_network">İnternet bağlantısı yok</string>
+    <string name="error_fetch_failed">Video bilgisi alınamadı</string>
+    <string name="error_download_failed">İndirme başarısız oldu</string>
+    <string name="error_storage">Depolama alanı yetersiz</string>
+    <string name="error_permission">Depolama izni gerekli</string>
+    
+    <!-- Toasts & Snackbars -->
+    <string name="toast_download_started">İndirme başladı</string>
+    <string name="toast_download_complete">İndirme tamamlandı</string>
+    <string name="toast_copied">Kopyalandı</string>
+    <string name="toast_deleted">Silindi</string>
+    <string name="toast_link_received">Link alındı</string>
+    
+    <!-- Formats -->
+    <string name="format_duration">%1$d:%2$02d</string>
+    <string name="format_size_mb">%.1f MB</string>
+    <string name="format_size_kb">%.1f KB</string>
+</resources>
