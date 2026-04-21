@@ -43,7 +43,7 @@ The developers of this application are **NOT responsible** for:
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/VideoDownloader.git
+git clone https://github.com/ahmetemrew/VideoDownloader.git
 
 # Open in Android Studio and build
 ./gradlew assembleDebug

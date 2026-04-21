@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">#0E1522</color>
+    <color name="surface">#162033</color>
+    <color name="surface_light">#1E2A40</color>
+    <color name="screen_gradient_start">#0B1220</color>
+    <color name="screen_gradient_center">#10192A</color>
+    <color name="screen_gradient_end">#162033</color>
+    <color name="on_background">#F4F7FB</color>
+    <color name="on_surface">#F4F7FB</color>
+    <color name="text_primary">#F4F7FB</color>
+    <color name="text_secondary">#A8B6CC</color>
+    <color name="text_hint">#7C8CA5</color>
+    <color name="divider">#22314A</color>
+    <color name="card_background">#162033</color>
+    <color name="progress_background">#243650</color>
+    <color name="progress_foreground">#5DA2FF</color>
+</resources>

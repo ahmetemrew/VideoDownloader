@@ -32,7 +32,9 @@ enum class VideoQuality(
 data class AvailableQuality(
     val quality: VideoQuality,
     val fileSize: Long? = null, // bytes cinsinden
-    val url: String
+    val url: String,
+    val extractorArgs: String? = null,
+    val strictSelection: Boolean = false
 ) {
     /**
      * Okunabilir dosya boyutu döndürür (örn: "12.5 MB")

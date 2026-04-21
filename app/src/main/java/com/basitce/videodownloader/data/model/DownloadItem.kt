@@ -3,51 +3,42 @@ package com.basitce.videodownloader.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-/**
- * İndirme durumu
- */
 enum class DownloadStatus {
-    PENDING,      // Beklemede
-    DOWNLOADING,  // İndiriliyor
-    PAUSED,       // Duraklatıldı
-    COMPLETED,    // Tamamlandı
-    FAILED        // Başarısız
+    PENDING,
+    DOWNLOADING,
+    PAUSED,
+    COMPLETED,
+    FAILED
 }
 
-/**
- * İndirilen video kaydı (Room Entity)
- */
 @Entity(tableName = "downloads")
 data class DownloadItem(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    
     val originalUrl: String,
     val platform: Platform,
     val videoTitle: String,
-    val customFileName: String, // Kullanıcının belirlediği dosya adı
+    val customFileName: String,
     val thumbnailUrl: String?,
-    val duration: Long?, // saniye
+    val duration: Long?,
     val author: String?,
-    
     val quality: VideoQuality,
+    val downloadProfile: DownloadProfile = DownloadProfile.MAX,
     val downloadUrl: String,
-    val filePath: String?, // İndirildikten sonra dolu
-    val fileSize: Long?, // bytes
-    
+    val downloadExtractorArgs: String? = null,
+    val strictSelection: Boolean = false,
+    val filePath: String?,
+    val fileSize: Long?,
+    val galleryUri: String? = null,
     val status: DownloadStatus = DownloadStatus.PENDING,
-    val progress: Int = 0, // 0-100
+    val progress: Int = 0,
     val errorMessage: String? = null,
-    
     val createdAt: Long = System.currentTimeMillis(),
     val completedAt: Long? = null
 ) {
-    /**
-     * Okunabilir dosya boyutu döndürür
-     */
     fun getFormattedSize(): String {
         if (fileSize == null) return ""
-        
+
         return when {
             fileSize < 1024 -> "$fileSize B"
             fileSize < 1024 * 1024 -> String.format("%.1f KB", fileSize / 1024.0)
@@ -56,20 +47,14 @@ data class DownloadItem(
         }
     }
 
-    /**
-     * Okunabilir süre döndürür
-     */
     fun getFormattedDuration(): String {
         if (duration == null) return ""
-        
+
         val minutes = duration / 60
         val seconds = duration % 60
         return String.format("%d:%02d", minutes, seconds)
     }
 
-    /**
-     * Durum metni döndürür
-     */
     fun getStatusText(): String {
         return when (status) {
             DownloadStatus.PENDING -> "Beklemede"
@@ -77,6 +62,18 @@ data class DownloadItem(
             DownloadStatus.PAUSED -> "Duraklatıldı"
             DownloadStatus.COMPLETED -> "Tamamlandı"
             DownloadStatus.FAILED -> "Başarısız"
+        }
+    }
+
+    fun isSavedToGallery(): Boolean = !galleryUri.isNullOrBlank()
+
+    fun getDisplayQualityLabel(): String {
+        return when (downloadProfile) {
+            DownloadProfile.MAX,
+            DownloadProfile.MIN,
+            DownloadProfile.AUDIO_ONLY -> downloadProfile.label
+
+            else -> quality.resolution
         }
     }
 }

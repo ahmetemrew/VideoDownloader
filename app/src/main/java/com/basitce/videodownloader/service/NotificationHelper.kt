@@ -173,6 +173,24 @@ object NotificationHelper {
     }
 
     /**
+     * Eski sÃ¼rÃ¼mlerden kalmÄ±ÅŸ takÄ±lÄ± ilerleme bildirimlerini temizler
+     */
+    fun cancelStaleProgressNotifications(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return
+        }
+
+        try {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.activeNotifications
+                ?.filter { it.notification.channelId == CHANNEL_ID_PROGRESS }
+                ?.forEach { manager.cancel(it.id) }
+        } catch (e: Exception) {
+            // Ignore
+        }
+    }
+
+    /**
      * Bildirim izni var mı kontrol et
      */
     private fun hasNotificationPermission(context: Context): Boolean {

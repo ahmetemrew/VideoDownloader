@@ -1,163 +1,306 @@
 package com.basitce.videodownloader.data.scraper
 
-import android.content.ContentValues
 import android.content.Context
-import android.os.Build
 import android.os.Environment
-import android.provider.MediaStore
+import com.basitce.videodownloader.data.LinkResolver
+import com.basitce.videodownloader.data.model.Platform
+import com.yausername.youtubedl_android.YoutubeDL
+import com.yausername.youtubedl_android.YoutubeDLRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.util.concurrent.TimeUnit
 
-/**
- * Video dosyasını indiren yönetici sınıf
- */
 class VideoDownloader(private val context: Context) {
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(60, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
-        .followRedirects(true)
-        .followSslRedirects(true)
-        .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
-                .header("User-Agent", "Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36")
-                .header("Accept", "*/*")
-                .header("Referer", "https://www.instagram.com/")
-                .build()
-            chain.proceed(request)
-        }
-        .build()
+    data class DownloadResult(
+        val filePath: String,
+        val fileSize: Long
+    )
 
-    /**
-     * Video dosyasını indirir
-     * @param videoUrl İndirilecek video URL'si
-     * @param fileName Kaydedilecek dosya adı (.mp4 uzantısız)
-     * @param onProgress İlerleme callback (0-100)
-     * @return İndirilen dosyanın yolu veya hata
-     */
     suspend fun downloadVideo(
-        videoUrl: String,
+        sourceUrl: String,
+        formatSelector: String,
+        extractorArgs: String? = null,
+        strictSelection: Boolean = false,
         fileName: String,
         onProgress: (Int) -> Unit = {}
-    ): Result<String> = withContext(Dispatchers.IO) {
+    ): Result<DownloadResult> = withContext(Dispatchers.IO) {
+        val normalizedSourceUrl = CanonicalUrlResolver.resolve(sourceUrl)
+        val safeFileStem = buildSafeFileStem(fileName)
+        val outputDir = getOutputDirectory()
+        val platform = LinkResolver.detectPlatform(normalizedSourceUrl)
+
         try {
-            val request = Request.Builder()
-                .url(videoUrl)
-                .build()
-
-            val response = client.newCall(request).execute()
-            
-            if (!response.isSuccessful) {
-                return@withContext Result.failure(Exception("İndirme başarısız: ${response.code}"))
+            if (!outputDir.exists()) {
+                outputDir.mkdirs()
             }
 
-            val body = response.body ?: return@withContext Result.failure(Exception("Boş yanıt"))
-            val contentLength = body.contentLength()
-            
-            val safeFileName = fileName
-                .replace(Regex("[\\\\/:*?\"<>|]"), "_")
-                .take(50) + ".mp4"
+            if (platform == Platform.TIKTOK && formatSelector == TikTokWebFallback.DIRECT_SELECTOR) {
+                val directFile = File(outputDir, "$safeFileStem.mp4")
+                val directSize = TikTokWebFallback.downloadToFile(
+                    pageUrl = normalizedSourceUrl,
+                    destination = directFile,
+                    onProgress = onProgress
+                )
 
-            // Android 10+ için MediaStore kullan
-            val filePath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                saveToMediaStore(body.byteStream(), safeFileName, contentLength, onProgress)
-            } else {
-                saveToExternalStorage(body.byteStream(), safeFileName, contentLength, onProgress)
+                return@withContext Result.success(
+                    DownloadResult(
+                        filePath = directFile.absolutePath,
+                        fileSize = directSize
+                    )
+                )
             }
 
-            Result.success(filePath)
+            YtDlpEngine.ensureInitialized(context)
+
+            val outputTemplate = File(outputDir, "$safeFileStem.%(ext)s").absolutePath
+            val processId = "download-$safeFileStem"
+            val job = currentCoroutineContext().job
+
+            val cancelHandler = job.invokeOnCompletion { cause ->
+                if (cause is CancellationException) {
+                    YoutubeDL.getInstance().destroyProcessById(processId)
+                }
+            }
+
+            try {
+                var lastError: Exception? = null
+
+                for (attempt in buildAttempts(normalizedSourceUrl, formatSelector, extractorArgs, strictSelection)) {
+                    try {
+                        val request = buildDownloadRequest(
+                            sourceUrl = normalizedSourceUrl,
+                            selector = attempt.selector,
+                            outputTemplate = outputTemplate,
+                            extractorArgs = attempt.extractorArgs,
+                            audioOnly = attempt.audioOnly
+                        )
+
+                        YoutubeDL.getInstance().execute(request, processId) { progress, _, _ ->
+                            if (progress >= 0f) {
+                                onProgress(progress.toInt().coerceIn(0, 99))
+                            }
+                        }
+
+                        val downloadedFile = outputDir.listFiles()
+                            ?.filter { it.isFile && it.name.startsWith(safeFileStem) }
+                            ?.maxByOrNull { it.lastModified() }
+                            ?: throw IllegalStateException("Indirilen dosya bulunamadi")
+
+                        onProgress(100)
+                        return@withContext Result.success(
+                            DownloadResult(
+                                filePath = downloadedFile.absolutePath,
+                                fileSize = downloadedFile.length()
+                            )
+                        )
+                    } catch (e: YoutubeDL.CanceledException) {
+                        throw CancellationException("Indirme iptal edildi", e)
+                    } catch (e: Exception) {
+                        lastError = e
+                    }
+                }
+
+                if (platform == Platform.TIKTOK) {
+                    val directFile = File(outputDir, "$safeFileStem.mp4")
+                    val directSize = TikTokWebFallback.downloadToFile(
+                        pageUrl = normalizedSourceUrl,
+                        destination = directFile,
+                        onProgress = onProgress
+                    )
+
+                    return@withContext Result.success(
+                        DownloadResult(
+                            filePath = directFile.absolutePath,
+                            fileSize = directSize
+                        )
+                    )
+                }
+
+                Result.failure(lastError ?: IllegalStateException("Indirme basarisiz oldu"))
+            } finally {
+                cancelHandler.dispose()
+            }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            e.printStackTrace()
             Result.failure(e)
         }
     }
 
-    /**
-     * Android 10+ için MediaStore'a kaydet
-     */
-    private fun saveToMediaStore(
-        inputStream: InputStream,
-        fileName: String,
-        contentLength: Long,
-        onProgress: (Int) -> Unit
-    ): String {
-        val resolver = context.contentResolver
-        
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-            put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/VideoDownloader")
-            put(MediaStore.Video.Media.IS_PENDING, 1)
+    private fun buildAttempts(
+        sourceUrl: String,
+        preferredSelector: String,
+        extractorArgs: String?,
+        strictSelection: Boolean
+    ): List<DownloadAttempt> {
+        val platform = LinkResolver.detectPlatform(sourceUrl)
+        val maxHeight = Regex("height<=([0-9]+)")
+            .find(preferredSelector)
+            ?.groupValues
+            ?.getOrNull(1)
+
+        val audioOnly = preferredSelector.contains("bestaudio", ignoreCase = true) &&
+            !preferredSelector.contains("bestvideo", ignoreCase = true)
+
+        val extractorArgsCandidates = extractorArgsCandidates(platform, extractorArgs)
+
+        if (strictSelection) {
+            return listOf(
+                DownloadAttempt(
+                    selector = preferredSelector,
+                    extractorArgs = extractorArgsCandidates.firstOrNull(),
+                    audioOnly = audioOnly
+                )
+            )
         }
 
-        val uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
-            ?: throw Exception("MediaStore URI oluşturulamadı")
+        val selectors = linkedSetOf<String>()
+        if (preferredSelector.isNotBlank()) {
+            selectors += preferredSelector
+        }
 
-        resolver.openOutputStream(uri)?.use { outputStream ->
-            val buffer = ByteArray(8192)
-            var bytesRead: Int
-            var totalBytesRead = 0L
+        when (platform) {
+            Platform.YOUTUBE -> {
+                if (audioOnly) {
+                    selectors += "bestaudio[ext=m4a]/bestaudio/best"
+                } else {
+                    if (maxHeight != null) {
+                        selectors += "bestvideo*[height<=$maxHeight]+bestaudio/best*[height<=$maxHeight][ext=mp4]/best*[height<=$maxHeight]/best"
+                        selectors += "bestvideo*[height<=$maxHeight]+bestaudio/best*[height<=$maxHeight]/best"
+                        selectors += "best[height<=$maxHeight][ext=mp4]/best[height<=$maxHeight]/best"
+                    }
+                    selectors += "bestvideo*+bestaudio/best[ext=mp4]/best"
+                    selectors += "best"
+                }
+            }
 
-            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                outputStream.write(buffer, 0, bytesRead)
-                totalBytesRead += bytesRead
-                
-                if (contentLength > 0) {
-                    val progress = ((totalBytesRead * 100) / contentLength).toInt()
-                    onProgress(progress.coerceIn(0, 100))
+            else -> {
+                if (audioOnly) {
+                    selectors += "bestaudio/best"
+                } else {
+                    if (maxHeight != null) {
+                        selectors += "best[height<=$maxHeight]/best"
+                    }
+                    selectors += "best"
                 }
             }
         }
 
-        // İndirme tamamlandı, IS_PENDING'i kaldır
-        contentValues.clear()
-        contentValues.put(MediaStore.Video.Media.IS_PENDING, 0)
-        resolver.update(uri, contentValues, null, null)
-
-        return uri.toString()
+        return buildList {
+            extractorArgsCandidates.forEach { args ->
+                selectors.forEach { selector ->
+                    add(
+                        DownloadAttempt(
+                            selector = selector,
+                            extractorArgs = args,
+                            audioOnly = audioOnly
+                        )
+                    )
+                }
+            }
+        }
     }
 
-    /**
-     * Android 9 ve altı için harici depolamaya kaydet
-     */
+    private fun buildSafeFileStem(fileName: String): String {
+        val sanitized = fileName
+            .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .ifBlank { "video" }
+            .take(60)
+
+        return "$sanitized-${System.currentTimeMillis()}"
+    }
+
     @Suppress("DEPRECATION")
-    private fun saveToExternalStorage(
-        inputStream: InputStream,
-        fileName: String,
-        contentLength: Long,
-        onProgress: (Int) -> Unit
-    ): String {
-        val moviesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
-        val appDir = File(moviesDir, "VideoDownloader")
-        if (!appDir.exists()) {
-            appDir.mkdirs()
-        }
+    private fun getOutputDirectory(): File {
+        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        return File(downloadsDir, "VideoDownloader")
+    }
 
-        val file = File(appDir, fileName)
-        
-        FileOutputStream(file).use { outputStream ->
-            val buffer = ByteArray(8192)
-            var bytesRead: Int
-            var totalBytesRead = 0L
+    private fun buildDownloadRequest(
+        sourceUrl: String,
+        selector: String,
+        outputTemplate: String,
+        extractorArgs: String?,
+        audioOnly: Boolean
+    ): YoutubeDLRequest {
+        val platform = LinkResolver.detectPlatform(sourceUrl)
+        val resolvedExtractorArgs = extractorArgs ?: defaultExtractorArgs(platform)
 
-            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                outputStream.write(buffer, 0, bytesRead)
-                totalBytesRead += bytesRead
-                
-                if (contentLength > 0) {
-                    val progress = ((totalBytesRead * 100) / contentLength).toInt()
-                    onProgress(progress.coerceIn(0, 100))
+        return YoutubeDLRequest(sourceUrl)
+            .addOption("--no-playlist")
+            .addOption("--newline")
+            .addOption("--progress")
+            .addOption("--no-part")
+            .addOption("--no-warnings")
+            .addOption("--geo-bypass")
+            .addOption("--retries", "3")
+            .addOption("--fragment-retries", "3")
+            .addOption("--extractor-retries", "3")
+            .addOption("--output", outputTemplate)
+            .addOption("--user-agent", MOBILE_USER_AGENT)
+            .apply {
+                if (!resolvedExtractorArgs.isNullOrBlank()) {
+                    addOption("--extractor-args", resolvedExtractorArgs)
+                }
+
+                if (platform == Platform.TIKTOK) {
+                    addOption("--referer", "https://www.tiktok.com/")
+                }
+
+                if (audioOnly) {
+                    addOption("--extract-audio")
+                    addOption("--audio-format", "mp3")
+                } else {
+                    addOption("--merge-output-format", "mp4")
                 }
             }
+            .addOption("-f", selector)
+    }
+
+    private fun defaultExtractorArgs(platform: Platform): String? {
+        return when (platform) {
+            Platform.YOUTUBE -> "youtube:player_client=default,-web_creator,-web_music"
+            Platform.TIKTOK -> TikTokSessionConfig.extractorArgs(context)
+            else -> null
+        }
+    }
+
+    private fun extractorArgsCandidates(platform: Platform, explicit: String?): List<String?> {
+        if (!explicit.isNullOrBlank()) {
+            return listOf(explicit)
         }
 
-        return file.absolutePath
+        return when (platform) {
+            Platform.YOUTUBE -> listOf(
+                "youtube:player_client=default,-web_creator,-web_music",
+                "youtube:player_client=android_vr,web_safari,tv_downgraded",
+                "youtube:player_client=android_vr,tv",
+                null
+            )
+
+            Platform.TIKTOK -> listOf(
+                TikTokSessionConfig.extractorArgs(context),
+                null
+            )
+
+            else -> listOf(null)
+        }
+    }
+
+    private data class DownloadAttempt(
+        val selector: String,
+        val extractorArgs: String?,
+        val audioOnly: Boolean
+    )
+
+    private companion object {
+        const val MOBILE_USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
     }
 }

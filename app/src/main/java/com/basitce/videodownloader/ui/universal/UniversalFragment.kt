@@ -7,29 +7,29 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import coil.load
 import com.basitce.videodownloader.MainActivity
 import com.basitce.videodownloader.R
 import com.basitce.videodownloader.data.AppPreferences
 import com.basitce.videodownloader.data.LinkResolver
 import com.basitce.videodownloader.data.model.AvailableQuality
-import com.basitce.videodownloader.data.model.DownloadItem
-import com.basitce.videodownloader.data.model.DownloadStatus
+import com.basitce.videodownloader.data.model.DownloadProfile
 import com.basitce.videodownloader.data.model.VideoInfo
-import com.basitce.videodownloader.data.repository.DownloadRepository
-import com.basitce.videodownloader.data.scraper.VideoDownloader
-import com.basitce.videodownloader.data.scraper.VideoScraper
 import com.basitce.videodownloader.databinding.FragmentUniversalBinding
 import com.basitce.videodownloader.service.DownloadManager
 import com.basitce.videodownloader.service.NotificationHelper
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 class UniversalFragment : Fragment() {
@@ -37,11 +37,12 @@ class UniversalFragment : Fragment() {
     private var _binding: FragmentUniversalBinding? = null
     private val binding get() = _binding!!
 
-    private var currentVideoInfo: VideoInfo? = null
-    private var selectedQuality: AvailableQuality? = null
-    private lateinit var videoScraper: VideoScraper
+    private val previewViewModel: UniversalPreviewViewModel by activityViewModels()
+
     private lateinit var downloadManager: DownloadManager
     private lateinit var appPreferences: AppPreferences
+
+    private var isRenderingState = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,19 +55,16 @@ class UniversalFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
-        // Bağımlılıkları başlat
-        videoScraper = VideoScraper(requireContext())
+
         downloadManager = DownloadManager.getInstance(requireContext())
         appPreferences = AppPreferences(requireContext())
-        
-        // Bildirim kanallarını oluştur
+
         NotificationHelper.createNotificationChannels(requireContext())
-        
+
         setupUI()
+        observePreviewState()
         checkPendingUrl()
-        
-        // Otomatik yapıştır ayarı açıksa kontrol et
+
         if (appPreferences.autoPasteEnabled && appPreferences.isFirstLaunch) {
             appPreferences.isFirstLaunch = false
             autoPasteFromClipboard()
@@ -76,56 +74,91 @@ class UniversalFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         checkPendingUrl()
-        
-        // Her resume'da otomatik yapıştır
-        if (appPreferences.autoPasteEnabled && binding.urlInput.text.isNullOrBlank()) {
+
+        if (appPreferences.autoPasteEnabled && previewViewModel.state.value.inputUrl.isBlank()) {
             autoPasteFromClipboard()
         }
     }
 
     private fun setupUI() {
-        // URL input değişikliklerini dinle
         binding.urlInput.doAfterTextChanged { text ->
-            val url = text?.toString() ?: ""
-            updatePlatformIndicator(url)
+            if (isRenderingState) {
+                return@doAfterTextChanged
+            }
+
+            previewViewModel.setInputUrl(text?.toString().orEmpty())
+            updatePlatformIndicator(text?.toString().orEmpty())
         }
 
-        // Klavyede Done'a basıldığında
         binding.urlInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 fetchVideoInfo()
                 true
-            } else false
+            } else {
+                false
+            }
         }
 
-        // Yapıştır butonu
-        binding.btnPaste.setOnClickListener {
-            pasteFromClipboard()
+        binding.filenameInput.doAfterTextChanged { text ->
+            if (isRenderingState) {
+                return@doAfterTextChanged
+            }
+            previewViewModel.updateFileName(text?.toString().orEmpty())
         }
 
-        // Getir butonu
-        binding.btnFetch.setOnClickListener {
-            fetchVideoInfo()
-        }
+        binding.btnPaste.setOnClickListener { pasteFromClipboard() }
+        binding.btnFetch.setOnClickListener { fetchVideoInfo() }
+        binding.btnDownload.setOnClickListener { startDownload() }
+    }
 
-        // İndir butonu
-        binding.btnDownload.setOnClickListener {
-            startDownload()
+    private fun observePreviewState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                previewViewModel.state.collect { state ->
+                    renderState(state)
+                }
+            }
+        }
+    }
+
+    private fun renderState(state: UniversalPreviewState) {
+        isRenderingState = true
+        try {
+            if (binding.urlInput.text?.toString().orEmpty() != state.inputUrl) {
+                binding.urlInput.setText(state.inputUrl)
+                binding.urlInput.setSelection(binding.urlInput.text?.length ?: 0)
+            }
+
+            if (binding.filenameInput.text?.toString().orEmpty() != state.fileName) {
+                binding.filenameInput.setText(state.fileName)
+                binding.filenameInput.setSelection(binding.filenameInput.text?.length ?: 0)
+            }
+
+            updatePlatformIndicator(state.inputUrl)
+            showLoading(state.isLoading)
+
+            if (state.videoInfo != null) {
+                displayVideoInfo(state.videoInfo, state.selectedQualitySelector)
+            } else if (!state.isLoading) {
+                binding.videoPreviewCard.isVisible = false
+            }
+
+            state.error?.let { error ->
+                showError(formatFetchErrorMessage(error))
+                previewViewModel.clearError()
+            }
+        } finally {
+            isRenderingState = false
         }
     }
 
     private fun checkPendingUrl() {
         val activity = activity as? MainActivity ?: return
-        val pendingUrl = activity.consumePendingSharedUrl()
-        if (pendingUrl != null) {
-            binding.urlInput.setText(pendingUrl)
-            fetchVideoInfo()
-        }
+        val pendingUrl = activity.consumePendingSharedUrl() ?: return
+        previewViewModel.setInputUrl(pendingUrl)
+        previewViewModel.fetchVideoInfo(pendingUrl)
     }
 
-    /**
-     * Panodan otomatik yapıştır (sessiz)
-     */
     private fun autoPasteFromClipboard() {
         try {
             val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -133,14 +166,13 @@ class UniversalFragment : Fragment() {
             if (clip != null && clip.itemCount > 0) {
                 val pastedText = clip.getItemAt(0).text?.toString() ?: ""
                 val url = LinkResolver.extractUrlFromText(pastedText)
-                
+
                 if (url != null && LinkResolver.isSupported(url)) {
-                    binding.urlInput.setText(url)
-                    updatePlatformIndicator(url)
+                    previewViewModel.setInputUrl(url)
                 }
             }
-        } catch (e: Exception) {
-            // Sessiz hata - izin yoksa veya başka sorun varsa görmezden gel
+        } catch (_: Exception) {
+            // Ignore clipboard read errors for silent auto-paste.
         }
     }
 
@@ -148,23 +180,22 @@ class UniversalFragment : Fragment() {
         try {
             val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = clipboard.primaryClip
-            if (clip != null && clip.itemCount > 0) {
-                val pastedText = clip.getItemAt(0).text?.toString() ?: ""
-                val url = LinkResolver.extractUrlFromText(pastedText) ?: pastedText
-                binding.urlInput.setText(url)
-                updatePlatformIndicator(url)
-                
-                // Otomatik olarak video bilgisini getir
-                if (LinkResolver.isSupported(url)) {
-                    fetchVideoInfo()
-                } else if (url.isNotBlank()) {
-                    showError("Bu link desteklenmiyor. Desteklenen platformlar: Instagram, TikTok, Twitter/X, YouTube, Facebook, Pinterest")
-                }
-            } else {
-                showError("Panoda kopyalanmış link yok")
+            if (clip == null || clip.itemCount == 0) {
+                showError("Panoda kopyalanmis link yok")
+                return
+            }
+
+            val pastedText = clip.getItemAt(0).text?.toString() ?: ""
+            val url = LinkResolver.extractUrlFromText(pastedText) ?: pastedText
+            previewViewModel.setInputUrl(url)
+
+            if (LinkResolver.isSupported(url)) {
+                previewViewModel.fetchVideoInfo(url)
+            } else if (url.isNotBlank()) {
+                showError("Bu link desteklenmiyor. Desteklenen platformlar: Instagram, TikTok, Twitter/X, YouTube, Facebook, Pinterest")
             }
         } catch (e: Exception) {
-            showError("Pano okunamadı: ${e.message}")
+            showError("Pano okunamadi: ${e.message}")
         }
     }
 
@@ -175,24 +206,23 @@ class UniversalFragment : Fragment() {
         }
 
         val result = LinkResolver.resolve(url)
+        binding.platformIndicator.isVisible = true
         if (result.isValid) {
-            binding.platformIndicator.isVisible = true
             binding.platformIcon.setImageResource(result.platform.iconRes)
             binding.platformName.text = getString(R.string.platform_detected, result.platform.displayName)
             binding.platformName.setTextColor(resources.getColor(R.color.success, null))
         } else {
-            binding.platformIndicator.isVisible = true
             binding.platformIcon.setImageResource(R.drawable.ic_link)
-            binding.platformName.text = "Platform tanınmadı"
+            binding.platformName.text = "Platform taninmadi"
             binding.platformName.setTextColor(resources.getColor(R.color.warning, null))
         }
     }
 
     private fun fetchVideoInfo() {
         val url = binding.urlInput.text?.toString()?.trim() ?: ""
-        
+
         if (url.isBlank()) {
-            showError("Lütfen bir video linki girin")
+            showError("Lutfen bir video linki girin")
             return
         }
 
@@ -201,52 +231,8 @@ class UniversalFragment : Fragment() {
             return
         }
 
-        // Loading durumunu göster
-        showLoading(true)
         binding.videoPreviewCard.isVisible = false
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                // Gerçek web scraping kullan (Jsoup + WebView fallback)
-                val result = videoScraper.scrapeVideoInfo(url)
-                
-                showLoading(false)
-                
-                result.onSuccess { videoInfo ->
-                    currentVideoInfo = videoInfo
-                    displayVideoInfo(videoInfo)
-                }.onFailure { error ->
-                    handleFetchError(error)
-                }
-            } catch (e: Exception) {
-                showLoading(false)
-                handleFetchError(e)
-            }
-        }
-    }
-
-    /**
-     * Hata mesajlarını kullanıcı dostu hale getir
-     */
-    private fun handleFetchError(error: Throwable) {
-        val message = when (error) {
-            is UnknownHostException -> "İnternet bağlantısı yok. Lütfen bağlantınızı kontrol edin."
-            is java.net.SocketTimeoutException -> "Bağlantı zaman aşımına uğradı. Tekrar deneyin."
-            is java.io.IOException -> "Ağ hatası oluştu: ${error.message}"
-            else -> {
-                val msg = error.message ?: "Bilinmeyen hata"
-                when {
-                    msg.contains("video", ignoreCase = true) && msg.contains("bulunamadı", ignoreCase = true) ->
-                        "Video bulunamadı. Link doğru mu kontrol edin."
-                    msg.contains("permission", ignoreCase = true) ->
-                        "Erişim izni reddedildi. Bu video gizli olabilir."
-                    msg.contains("404") ->
-                        "Sayfa bulunamadı. Video silinmiş olabilir."
-                    else -> "Hata: $msg"
-                }
-            }
-        }
-        showError(message)
+        previewViewModel.fetchVideoInfo(url)
     }
 
     private fun showLoading(show: Boolean) {
@@ -255,10 +241,9 @@ class UniversalFragment : Fragment() {
         binding.btnPaste.isEnabled = !show
     }
 
-    private fun displayVideoInfo(videoInfo: VideoInfo) {
+    private fun displayVideoInfo(videoInfo: VideoInfo, selectedSelector: String?) {
         binding.videoPreviewCard.isVisible = true
 
-        // Thumbnail yükle
         videoInfo.thumbnailUrl?.let { url ->
             binding.videoThumbnail.load(url) {
                 crossfade(true)
@@ -269,52 +254,42 @@ class UniversalFragment : Fragment() {
             binding.videoThumbnail.setBackgroundColor(resources.getColor(R.color.surface_dark, null))
         }
 
-        // Video bilgilerini göster
         binding.videoTitle.text = videoInfo.title
         binding.videoAuthor.text = videoInfo.author ?: videoInfo.platform.displayName
         binding.videoDuration.text = videoInfo.getFormattedDuration()
         binding.videoDuration.isVisible = videoInfo.duration != null
 
-        // Dosya adını ayarla (varsayılan olarak video başlığı)
-        val safeFileName = videoInfo.title
-            .replace(Regex("[\\\\/:*?\"<>|]"), "_")
-            .take(50)
-        binding.filenameInput.setText(safeFileName)
-
-        // Kalite seçeneklerini oluştur
         if (videoInfo.availableQualities.isNotEmpty()) {
-            setupQualityChips(videoInfo.availableQualities)
+            setupQualityChips(videoInfo.availableQualities, selectedSelector)
             binding.btnDownload.isEnabled = true
-            binding.fileSizeInfo.text = "İndirmeye hazır"
-            binding.fileSizeInfo.setTextColor(resources.getColor(R.color.success, null))
         } else {
             binding.qualityChips.removeAllViews()
-            binding.fileSizeInfo.text = "⚠️ Video URL bulunamadı. Bu platform videoyu koruma altında tutuyor olabilir."
+            binding.fileSizeInfo.text = "Video URL bulunamadi. Bu platform videoyu koruma altinda tutuyor olabilir."
             binding.fileSizeInfo.setTextColor(resources.getColor(R.color.warning, null))
             binding.btnDownload.isEnabled = false
         }
     }
 
-    private fun setupQualityChips(qualities: List<AvailableQuality>) {
+    private fun setupQualityChips(qualities: List<AvailableQuality>, selectedSelector: String?) {
         binding.qualityChips.removeAllViews()
-        
+
         qualities.forEachIndexed { index, quality ->
             val chip = Chip(requireContext()).apply {
                 text = "${quality.quality.label} (${quality.quality.resolution})"
                 isCheckable = true
-                isChecked = index == 0
-                
+                val shouldCheck = quality.url == selectedSelector || (selectedSelector == null && index == 0)
+                isChecked = shouldCheck
+
                 setOnCheckedChangeListener { _, isChecked ->
                     if (isChecked) {
-                        selectedQuality = quality
+                        previewViewModel.selectQuality(quality)
                         updateFileSizeInfo(quality)
                     }
                 }
             }
             binding.qualityChips.addView(chip)
-            
-            if (index == 0) {
-                selectedQuality = quality
+
+            if (chip.isChecked) {
                 updateFileSizeInfo(quality)
             }
         }
@@ -324,55 +299,75 @@ class UniversalFragment : Fragment() {
         val sizeText = if (quality.fileSize != null) {
             "Tahmini boyut: ${quality.getFormattedSize()}"
         } else {
-            "İndirmeye hazır ✓"
+            "Indirmeye hazir"
         }
         binding.fileSizeInfo.text = sizeText
         binding.fileSizeInfo.setTextColor(resources.getColor(R.color.success, null))
     }
 
     private fun startDownload() {
-        val videoInfo = currentVideoInfo ?: return
-        val quality = selectedQuality ?: return
-        val customFileName = binding.filenameInput.text?.toString()?.trim() ?: videoInfo.title
+        val state = previewViewModel.state.value
+        val videoInfo = state.videoInfo ?: return
+        val quality = previewViewModel.selectedQuality() ?: return
+        val customFileName = binding.filenameInput.text?.toString()?.trim()?.ifBlank { videoInfo.title } ?: videoInfo.title
 
         if (quality.url.isBlank()) {
-            showError("Video URL bulunamadı. Lütfen farklı bir link deneyin.")
+            showError("Video URL bulunamadi. Lutfen farkli bir link deneyin.")
             return
         }
 
-        // Kuyruğa ekle
         viewLifecycleOwner.lifecycleScope.launch {
             downloadManager.enqueue(
                 url = videoInfo.url,
-                videoUrl = quality.url,
+                downloadSelector = quality.url,
+                downloadExtractorArgs = quality.extractorArgs,
+                strictSelection = quality.strictSelection,
                 platform = videoInfo.platform,
                 title = videoInfo.title,
                 thumbnailUrl = videoInfo.thumbnailUrl,
                 quality = quality.quality,
-                customFileName = customFileName
+                customFileName = customFileName,
+                downloadProfile = DownloadProfile.fromVideoQuality(quality.quality)
             )
-            
+
             val queuedCount = downloadManager.getQueuedCount()
             val activeCount = downloadManager.getActiveCount()
-            
             val message = if (activeCount > 0 || queuedCount > 0) {
-                "✅ Kuyruğa eklendi (${activeCount + queuedCount} indirme)"
+                "Kuyruga eklendi (${activeCount + queuedCount} indirme)"
             } else {
-                "✅ İndirme başladı: $customFileName"
+                "Indirme basladi: $customFileName"
             }
             showSuccess(message)
-            resetUI()
+            previewViewModel.reset()
         }
     }
 
-    private fun resetUI() {
-        binding.urlInput.text?.clear()
-        binding.videoPreviewCard.isVisible = false
-        binding.platformIndicator.isVisible = false
-        binding.btnDownload.text = getString(R.string.btn_download)
-        binding.btnDownload.isEnabled = true
-        currentVideoInfo = null
-        selectedQuality = null
+    private fun formatFetchErrorMessage(error: Throwable): String {
+        return when (error) {
+            is UnknownHostException -> "Internet baglantisi yok. Lutfen baglantinizi kontrol edin."
+            is SocketTimeoutException -> "Baglanti zaman asimina ugradi. Tekrar deneyin."
+            is IOException -> "Ag hatasi olustu: ${error.message}"
+            else -> {
+                val message = error.message ?: "Bilinmeyen hata"
+                when {
+                    message.contains("Video not available, status code 0", ignoreCase = true) ->
+                        "TikTok bu video icin hem standart web akisinda hem de uygulama extractor tarafinda veri vermedi."
+                    message.contains("Unable to extract webpage video data", ignoreCase = true) ->
+                        "TikTok web sayfasindan video verisi okunamadi."
+                    message.contains("status code 10204", ignoreCase = true) ->
+                        "TikTok bu videoyu mevcut IP ile engelliyor. Farkli bir paylasim linki veya farkli ag deneyin."
+                    message.contains("fallback", ignoreCase = true) && message.contains("TikTok", ignoreCase = true) ->
+                        "TikTok fallback akisi da basarisiz oldu. Video gecici olarak TikTok tarafinda kisitli olabilir."
+                    message.contains("video", ignoreCase = true) && message.contains("bulunamadi", ignoreCase = true) ->
+                        "Video bulunamadi. Link dogru mu kontrol edin."
+                    message.contains("permission", ignoreCase = true) ->
+                        "Erisim izni reddedildi. Bu video gizli olabilir."
+                    message.contains("404") ->
+                        "Sayfa bulunamadi. Video silinmis olabilir."
+                    else -> "Hata: $message"
+                }
+            }
+        }
     }
 
     private fun showError(message: String) {

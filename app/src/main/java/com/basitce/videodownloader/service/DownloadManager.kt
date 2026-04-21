@@ -1,60 +1,63 @@
 package com.basitce.videodownloader.service
 
 import android.content.Context
+import androidx.core.content.ContextCompat
 import com.basitce.videodownloader.data.AppPreferences
 import com.basitce.videodownloader.data.model.DownloadItem
+import com.basitce.videodownloader.data.model.DownloadProfile
 import com.basitce.videodownloader.data.model.DownloadStatus
-import com.basitce.videodownloader.data.model.VideoQuality
 import com.basitce.videodownloader.data.model.Platform
+import com.basitce.videodownloader.data.model.VideoQuality
 import com.basitce.videodownloader.data.repository.DownloadRepository
-import com.basitce.videodownloader.data.scraper.VideoDownloader
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import java.util.concurrent.ConcurrentLinkedQueue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
-/**
- * İndirme kuyruğunu yöneten manager
- */
 class DownloadManager private constructor(private val context: Context) {
 
     companion object {
         @Volatile
         private var INSTANCE: DownloadManager? = null
 
+        const val MAX_CONCURRENT_DOWNLOADS = 2
+
         fun getInstance(context: Context): DownloadManager {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: DownloadManager(context.applicationContext).also { INSTANCE = it }
             }
         }
-
-        const val MAX_CONCURRENT_DOWNLOADS = 2
     }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val videoDownloader = VideoDownloader(context)
     private val downloadRepository = DownloadRepository(context)
     private val appPreferences = AppPreferences(context)
-    
-    private val downloadQueue = ConcurrentLinkedQueue<QueuedDownload>()
-    private val activeDownloads = mutableMapOf<Long, Job>()
-    
-    private val _queueState = MutableStateFlow<QueueState>(QueueState.Idle)
-    val queueState: StateFlow<QueueState> = _queueState
 
-    /**
-     * İndirme kuyruğuna ekle
-     */
+    init {
+        NotificationHelper.createNotificationChannels(context)
+        NotificationHelper.cancelStaleProgressNotifications(context)
+
+        scope.launch {
+            downloadRepository.reconcileCompletedDownloads()
+            downloadRepository.requeueInterruptedDownloads()
+            if (downloadRepository.getInFlightCount() > 0) {
+                ensureServiceRunning()
+            }
+        }
+    }
+
     suspend fun enqueue(
         url: String,
-        videoUrl: String,
+        downloadSelector: String,
+        downloadExtractorArgs: String?,
+        strictSelection: Boolean,
         platform: Platform,
         title: String,
         thumbnailUrl: String?,
         quality: VideoQuality,
-        customFileName: String
+        customFileName: String,
+        downloadProfile: DownloadProfile = DownloadProfile.fromVideoQuality(quality)
     ): Long {
-        // DownloadItem oluştur - doğru field isimleriyle
         val downloadItem = DownloadItem(
             originalUrl = url,
             platform = platform,
@@ -64,126 +67,93 @@ class DownloadManager private constructor(private val context: Context) {
             duration = null,
             author = null,
             quality = quality,
-            downloadUrl = videoUrl,
+            downloadProfile = downloadProfile,
+            downloadUrl = downloadSelector,
+            downloadExtractorArgs = downloadExtractorArgs,
+            strictSelection = strictSelection,
             filePath = null,
             fileSize = null,
+            galleryUri = null,
             status = DownloadStatus.PENDING
         )
+
         val downloadId = downloadRepository.insert(downloadItem)
-        
-        // Kuyruğa ekle
-        downloadQueue.add(QueuedDownload(
-            id = downloadId,
-            videoUrl = videoUrl,
-            fileName = customFileName,
-            item = downloadItem.copy(id = downloadId)
-        ))
-        
-        // Kuyruğu işle
-        processQueue()
-        
+        ensureServiceRunning()
         return downloadId
     }
 
-    private fun processQueue() {
-        scope.launch {
-            while (downloadQueue.isNotEmpty() && activeDownloads.size < MAX_CONCURRENT_DOWNLOADS) {
-                val queued = downloadQueue.poll() ?: continue
-                startDownload(queued)
-            }
-            updateQueueState()
-        }
-    }
-
-    private fun startDownload(queued: QueuedDownload) {
-        val job = scope.launch {
-            try {
-                downloadRepository.updateStatus(queued.id, DownloadStatus.DOWNLOADING)
-                NotificationHelper.showDownloadProgress(context, queued.id, queued.fileName, 0)
-                
-                val result = videoDownloader.downloadVideo(
-                    videoUrl = queued.videoUrl,
-                    fileName = queued.fileName,
-                    onProgress = { progress ->
-                        scope.launch {
-                            downloadRepository.updateProgress(queued.id, progress, 0)
-                            NotificationHelper.showDownloadProgress(context, queued.id, queued.fileName, progress)
-                        }
-                    }
+    suspend fun enqueueBatch(requests: List<QueuedDownloadRequest>): List<Long> {
+        val ids = mutableListOf<Long>()
+        requests.forEach { request ->
+            val id = downloadRepository.insert(
+                DownloadItem(
+                    originalUrl = request.sourceUrl,
+                    platform = request.platform,
+                    videoTitle = request.title,
+                    customFileName = request.fileName,
+                    thumbnailUrl = request.thumbnailUrl,
+                    duration = null,
+                    author = null,
+                    quality = request.quality,
+                    downloadProfile = request.downloadProfile,
+                    downloadUrl = request.downloadSelector,
+                    downloadExtractorArgs = request.downloadExtractorArgs,
+                    strictSelection = request.strictSelection,
+                    filePath = null,
+                    fileSize = null,
+                    galleryUri = null,
+                    status = DownloadStatus.PENDING
                 )
-                
-                result.onSuccess { filePath ->
-                    downloadRepository.markCompleted(queued.id, filePath, 0)
-                    appPreferences.incrementDownloadCount()
-                    NotificationHelper.showDownloadComplete(context, queued.id, queued.fileName)
-                }.onFailure { error ->
-                    val errorMessage = error.message ?: "Bilinmeyen hata"
-                    downloadRepository.markFailed(queued.id, errorMessage)
-                    NotificationHelper.showDownloadFailed(context, queued.id, queued.fileName, errorMessage)
-                }
-                
-            } catch (e: CancellationException) {
-                downloadRepository.updateStatus(queued.id, DownloadStatus.PAUSED)
-                NotificationHelper.cancelNotification(context, queued.id)
-            } catch (e: Exception) {
-                val errorMessage = e.message ?: "Bilinmeyen hata"
-                downloadRepository.markFailed(queued.id, errorMessage)
-                NotificationHelper.showDownloadFailed(context, queued.id, queued.fileName, errorMessage)
-            } finally {
-                activeDownloads.remove(queued.id)
-                processQueue()
-            }
+            )
+            ids += id
         }
-        
-        activeDownloads[queued.id] = job
-        updateQueueState()
+
+        if (ids.isNotEmpty()) {
+            ensureServiceRunning()
+        }
+        return ids
     }
 
     fun cancelDownload(downloadId: Long) {
-        activeDownloads[downloadId]?.cancel()
-        activeDownloads.remove(downloadId)
-        downloadQueue.removeIf { it.id == downloadId }
-        
         scope.launch {
-            downloadRepository.updateStatus(downloadId, DownloadStatus.FAILED)
+            downloadRepository.markFailed(downloadId, "Iptal edildi")
         }
-        
+        DownloadService.cancelDownload(context, downloadId)
         NotificationHelper.cancelNotification(context, downloadId)
-        updateQueueState()
     }
 
     fun cancelAll() {
-        activeDownloads.values.forEach { it.cancel() }
-        activeDownloads.clear()
-        downloadQueue.clear()
+        DownloadService.stopService(context)
         NotificationHelper.cancelAllNotifications(context)
-        updateQueueState()
     }
 
-    private fun updateQueueState() {
-        _queueState.value = when {
-            activeDownloads.isNotEmpty() -> QueueState.Downloading(
-                activeCount = activeDownloads.size,
-                queuedCount = downloadQueue.size
-            )
-            downloadQueue.isNotEmpty() -> QueueState.Queued(downloadQueue.size)
-            else -> QueueState.Idle
-        }
+    suspend fun getActiveCount(): Int {
+        return downloadRepository.getDownloadsForProcessing()
+            .count { it.status == DownloadStatus.DOWNLOADING }
     }
 
-    fun getActiveCount(): Int = activeDownloads.size
-    fun getQueuedCount(): Int = downloadQueue.size
+    suspend fun getQueuedCount(): Int {
+        return downloadRepository.getDownloadsForProcessing()
+            .count { it.status == DownloadStatus.PENDING }
+    }
 
-    data class QueuedDownload(
-        val id: Long,
-        val videoUrl: String,
-        val fileName: String,
-        val item: DownloadItem
+    private fun ensureServiceRunning() {
+        ContextCompat.startForegroundService(
+            context,
+            DownloadService.createProcessQueueIntent(context)
+        )
+    }
+
+    data class QueuedDownloadRequest(
+        val sourceUrl: String,
+        val downloadSelector: String,
+        val downloadExtractorArgs: String? = null,
+        val strictSelection: Boolean = false,
+        val platform: Platform,
+        val title: String,
+        val thumbnailUrl: String?,
+        val quality: VideoQuality,
+        val downloadProfile: DownloadProfile,
+        val fileName: String
     )
-
-    sealed class QueueState {
-        object Idle : QueueState()
-        data class Queued(val count: Int) : QueueState()
-        data class Downloading(val activeCount: Int, val queuedCount: Int) : QueueState()
-    }
 }

@@ -123,7 +123,9 @@ object VideoApiService {
             AvailableQuality(
                 quality = quality,
                 fileSize = fileSize,
-                url = "https://example.com/download/${quality.resolution}"
+                url = "https://example.com/download/${quality.resolution}",
+                extractorArgs = null,
+                strictSelection = false
             )
         }
     }

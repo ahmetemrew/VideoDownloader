@@ -1,58 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView 
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:paddingBottom="124dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp">
 
-        <!-- Header -->
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/universal_title"
-            android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
-            android:textColor="@color/text_primary"
-            android:layout_marginTop="24dp" />
+            android:orientation="vertical"
+            android:background="@drawable/bg_hero_card"
+            android:padding="24dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/universal_subtitle"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-            android:textColor="@color/text_secondary"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="24dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/universal_title"
+                android:textAppearance="@style/TextAppearance.Material3.DisplaySmall"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
 
-        <!-- URL Input Card -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/universal_subtitle"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                android:textColor="#E9F2FF" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_support_badge"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="8dp"
+                    android:text="Paste"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_support_badge"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="8dp"
+                    android:text="Detect"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_support_badge"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="8dp"
+                    android:text="Download"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="Instagram, TikTok, X, YouTube, Facebook ve Pinterest linklerini ayni akista isler."
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="#D9E8FF" />
+        </LinearLayout>
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/divider"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
-                <!-- Platform Indicator (Hidden initially) -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Link"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Bir link yapistir veya baska bir uygulamadan paylas. Uygulama platformu algilar ve indirilebilir kaliteyi hazirlar."
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="@color/text_secondary" />
+
                 <LinearLayout
                     android:id="@+id/platform_indicator"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_soft_panel"
                     android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="12dp"
                     android:visibility="gone"
-                    android:layout_marginBottom="12dp"
                     tools:visibility="visible">
 
                     <ImageView
@@ -64,19 +142,28 @@
 
                     <TextView
                         android:id="@+id/platform_name"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:textColor="@color/text_primary"
+                        tools:text="Instagram algilandi" />
+
+                    <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
-                        tools:text="Instagram algılandı" />
+                        android:text="Auto"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                        android:textColor="@color/primary" />
                 </LinearLayout>
 
-                <!-- URL Input -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/url_input_layout"
                     style="@style/Widget.VideoDownloader.TextInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
                     android:hint="@string/url_hint"
                     app:endIconMode="clear_text">
 
@@ -85,18 +172,20 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textUri"
+                        android:imeOptions="actionDone"
                         android:maxLines="3"
-                        android:imeOptions="actionDone" />
+                        android:minHeight="88dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Buttons Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="12dp"
-                    android:gravity="end">
+                    android:layout_marginTop="14dp"
+                    android:gravity="end"
+                    android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_paste"
@@ -110,22 +199,22 @@
                         android:id="@+id/btn_fetch"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="@string/btn_fetch" />
-
+                        android:layout_marginStart="10dp"
+                        android:text="@string/btn_fetch"
+                        app:icon="@drawable/ic_link" />
                 </LinearLayout>
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Loading State -->
         <LinearLayout
             android:id="@+id/loading_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_soft_panel"
             android:gravity="center"
-            android:padding="32dp"
+            android:orientation="vertical"
+            android:padding="28dp"
             android:visibility="gone"
             tools:visibility="visible">
 
@@ -137,19 +226,22 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:text="@string/fetching_video"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="@color/text_secondary" />
         </LinearLayout>
 
-        <!-- Video Preview Card (Hidden initially) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/video_preview_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/divider"
+            app:strokeWidth="1dp"
             android:visibility="gone"
             tools:visibility="visible">
 
@@ -158,75 +250,74 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Thumbnail -->
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="200dp">
+                    android:layout_height="220dp"
+                    android:layout_margin="12dp">
 
                     <ImageView
                         android:id="@+id/video_thumbnail"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:background="@drawable/bg_soft_panel"
                         android:scaleType="centerCrop"
-                        android:background="@color/card_background"
                         tools:ignore="ContentDescription" />
 
-                    <!-- Duration Badge -->
                     <TextView
                         android:id="@+id/video_duration"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="bottom|end"
-                        android:layout_margin="8dp"
+                        android:layout_margin="10dp"
                         android:background="@drawable/bg_duration_badge"
-                        android:paddingHorizontal="6dp"
-                        android:paddingVertical="2dp"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
                         android:textColor="@android:color/white"
                         android:textSize="12sp"
                         tools:text="3:45" />
 
-                    <!-- Play Icon Overlay -->
                     <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
                         android:layout_gravity="center"
+                        android:alpha="0.92"
                         android:src="@drawable/ic_play"
-                        android:alpha="0.8"
                         tools:ignore="ContentDescription" />
                 </FrameLayout>
 
-                <!-- Video Info -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="20dp">
 
                     <TextView
                         android:id="@+id/video_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                        android:maxLines="2"
                         android:ellipsize="end"
-                        tools:text="Amazing Video Title Here" />
+                        android:maxLines="2"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                        android:textColor="@color/text_primary"
+                        tools:text="Amazing video title here" />
 
                     <TextView
                         android:id="@+id/video_author"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:layout_marginTop="6dp"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="@color/text_secondary"
-                        tools:text="@user_name" />
+                        tools:text="@creator_name" />
 
-                    <!-- File Name Input -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/filename_input_layout"
                         style="@style/Widget.VideoDownloader.TextInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="18dp"
                         android:hint="@string/file_name">
 
                         <com.google.android.material.textfield.TextInputEditText
@@ -238,110 +329,117 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Quality Selector -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="18dp"
                         android:text="@string/select_quality"
-                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                        android:textColor="@color/text_primary" />
 
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/quality_chips"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        app:singleSelection="true"
-                        app:selectionRequired="true">
+                        android:layout_marginTop="10dp"
+                        app:selectionRequired="true"
+                        app:singleSelection="true" />
 
-                        <!-- Quality chips will be added dynamically -->
-
-                    </com.google.android.material.chip.ChipGroup>
-
-                    <!-- File Size Info -->
                     <TextView
                         android:id="@+id/file_size_info"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:layout_marginTop="10dp"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="@color/text_secondary"
-                        tools:text="Tahmini boyut: 25.4 MB" />
+                        tools:text="Hazir. Secilen kalite indirilmeye uygun." />
 
-                    <!-- Download Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_download"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_height="58dp"
+                        android:layout_marginTop="18dp"
                         android:text="@string/btn_download"
                         android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        app:cornerRadius="18dp"
                         app:icon="@drawable/ic_download"
-                        app:iconGravity="textStart"
-                        app:cornerRadius="12dp" />
-
+                        app:iconGravity="textStart" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Supported Platforms Info -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:text="Desteklenen Platformlar"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-            android:textColor="@color/text_primary" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_soft_panel"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_instagram"
-                tools:ignore="ContentDescription" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Supported apps"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textColor="@color/text_primary" />
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_tiktok"
-                tools:ignore="ContentDescription" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Share-sheet ile link gonder, yapistir veya panodan otomatik doldur."
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="@color/text_secondary" />
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_twitter"
-                tools:ignore="ContentDescription" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_youtube"
-                tools:ignore="ContentDescription" />
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/ic_instagram"
+                    tools:ignore="ContentDescription" />
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_facebook"
-                tools:ignore="ContentDescription" />
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/ic_tiktok"
+                    tools:ignore="ContentDescription" />
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_pinterest"
-                tools:ignore="ContentDescription" />
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/ic_twitter"
+                    tools:ignore="ContentDescription" />
 
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/ic_youtube"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/ic_facebook"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/ic_pinterest"
+                    tools:ignore="ContentDescription" />
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

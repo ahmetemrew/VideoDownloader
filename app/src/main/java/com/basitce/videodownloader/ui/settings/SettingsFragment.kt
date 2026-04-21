@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.basitce.videodownloader.BuildConfig
 import com.basitce.videodownloader.R
 import com.basitce.videodownloader.data.AppPreferences
+import com.basitce.videodownloader.data.model.DownloadProfile
 import com.basitce.videodownloader.data.model.VideoQuality
 import com.basitce.videodownloader.data.repository.DownloadRepository
 import com.basitce.videodownloader.databinding.FragmentSettingsBinding
@@ -35,39 +36,41 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         appPreferences = AppPreferences(requireContext())
         downloadRepository = DownloadRepository(requireContext())
-        
+
         setupUI()
         loadSettings()
     }
 
     private fun setupUI() {
-        // Versiyon bilgisi
         binding.versionText.text = getString(R.string.setting_version, BuildConfig.VERSION_NAME)
 
-        // Kalite seçimi
-        binding.settingQuality.setOnClickListener {
-            showQualityDialog()
+        binding.settingQuality.setOnClickListener { showQualityDialog() }
+        binding.settingBatchProfile.setOnClickListener { showBatchProfileDialog() }
+        binding.settingTheme.setOnClickListener { showThemeDialog() }
+
+        binding.switchGalleryAutoSave.setOnCheckedChangeListener { _, isChecked ->
+            appPreferences.galleryAutoSaveEnabled = isChecked
         }
 
-        // Auto-paste switch
         binding.switchAutoPaste.setOnCheckedChangeListener { _, isChecked ->
             appPreferences.autoPasteEnabled = isChecked
         }
 
-        // Notifications switch
         binding.switchNotifications.setOnCheckedChangeListener { _, isChecked ->
             appPreferences.notificationsEnabled = isChecked
         }
     }
 
     private fun loadSettings() {
-        // Mevcut ayarları yükle
+        binding.switchGalleryAutoSave.isChecked = appPreferences.galleryAutoSaveEnabled
         binding.switchAutoPaste.isChecked = appPreferences.autoPasteEnabled
         binding.switchNotifications.isChecked = appPreferences.notificationsEnabled
         updateQualityDisplay()
+        updateBatchProfileDisplay()
+        updateThemeDisplay()
         updateStats()
     }
 
@@ -77,23 +80,61 @@ class SettingsFragment : Fragment() {
             binding.versionText.text = buildString {
                 append(getString(R.string.setting_version, BuildConfig.VERSION_NAME))
                 append("\n")
-                append("Toplam indirme: $completedCount")
+                append(getString(R.string.settings_total_downloads, completedCount))
             }
         }
     }
 
     private fun showQualityDialog() {
         val qualities = VideoQuality.getVideoQualities()
-        val qualityNames = qualities.map { "${it.label} (${it.resolution})" }.toTypedArray()
+        val labels = qualities.map { "${it.label} (${it.resolution})" }.toTypedArray()
         val currentIndex = qualities.indexOf(appPreferences.defaultQuality).coerceAtLeast(0)
 
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.setting_quality)
-            .setSingleChoiceItems(qualityNames, currentIndex) { dialog, which ->
+            .setSingleChoiceItems(labels, currentIndex) { dialog, which ->
                 appPreferences.defaultQuality = qualities[which]
                 updateQualityDisplay()
                 dialog.dismiss()
-                Toast.makeText(context, "Varsayılan kalite güncellendi", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.settings_saved, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
+    }
+
+    private fun showBatchProfileDialog() {
+        val profiles = DownloadProfile.entries.toList()
+        val labels = profiles.map { "${it.label} - ${it.summary}" }.toTypedArray()
+        val currentIndex = profiles.indexOf(appPreferences.defaultDownloadProfile).coerceAtLeast(0)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.setting_batch_profile)
+            .setSingleChoiceItems(labels, currentIndex) { dialog, which ->
+                appPreferences.defaultDownloadProfile = profiles[which]
+                updateBatchProfileDisplay()
+                dialog.dismiss()
+                Toast.makeText(context, R.string.settings_saved, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
+    }
+
+    private fun showThemeDialog() {
+        val themes = listOf(
+            AppPreferences.THEME_LIGHT to getString(R.string.theme_light),
+            AppPreferences.THEME_DARK to getString(R.string.theme_dark),
+            AppPreferences.THEME_SYSTEM to getString(R.string.theme_system)
+        )
+        val labels = themes.map { it.second }.toTypedArray()
+        val currentIndex = themes.indexOfFirst { it.first == appPreferences.theme }.coerceAtLeast(0)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.setting_theme)
+            .setSingleChoiceItems(labels, currentIndex) { dialog, which ->
+                appPreferences.theme = themes[which].first
+                updateThemeDisplay()
+                dialog.dismiss()
+                requireActivity().recreate()
             }
             .setNegativeButton(R.string.dialog_cancel, null)
             .show()
@@ -102,6 +143,19 @@ class SettingsFragment : Fragment() {
     private fun updateQualityDisplay() {
         val quality = appPreferences.defaultQuality
         binding.qualityValue.text = "${quality.label} (${quality.resolution})"
+    }
+
+    private fun updateBatchProfileDisplay() {
+        val profile = appPreferences.defaultDownloadProfile
+        binding.batchProfileValue.text = "${profile.label} - ${profile.summary}"
+    }
+
+    private fun updateThemeDisplay() {
+        binding.themeValue.text = when (appPreferences.theme) {
+            AppPreferences.THEME_LIGHT -> getString(R.string.theme_light)
+            AppPreferences.THEME_DARK -> getString(R.string.theme_dark)
+            else -> getString(R.string.theme_system)
+        }
     }
 
     override fun onDestroyView() {

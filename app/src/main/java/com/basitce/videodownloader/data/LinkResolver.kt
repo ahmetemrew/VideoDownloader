@@ -1,16 +1,11 @@
 package com.basitce.videodownloader.data
 
+import android.net.Uri
 import com.basitce.videodownloader.data.model.Platform
+import java.util.Locale
 
-/**
- * URL'leri analiz edip platform ve video ID'sini çıkaran akıllı link çözümleyici
- * Tüm link formatlarını destekler: mobil, kısa link, embed, farklı domainler
- */
 object LinkResolver {
 
-    /**
-     * Link analiz sonucu
-     */
     data class ResolveResult(
         val platform: Platform,
         val videoId: String?,
@@ -18,210 +13,112 @@ object LinkResolver {
         val isValid: Boolean
     )
 
-    // Platform regex desenleri - EN KAPSAMLI HALI
-    private val platformPatterns: Map<Platform, List<Regex>> = mapOf(
-        
-        // INSTAGRAM - Tüm formatlar
-        Platform.INSTAGRAM to listOf(
-            // Post, Reel, TV, Reels
-            Regex("(?:https?://)?(?:www\\.)?instagram\\.com/(?:p|reel|tv|reels)/([A-Za-z0-9_-]+)/?.*", RegexOption.IGNORE_CASE),
-            // Kısa link
-            Regex("(?:https?://)?(?:www\\.)?instagr\\.am/(?:p|reel)/([A-Za-z0-9_-]+)/?.*", RegexOption.IGNORE_CASE),
-            // Stories
-            Regex("(?:https?://)?(?:www\\.)?instagram\\.com/stories/([^/]+)/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Profil video (IGTV)
-            Regex("(?:https?://)?(?:www\\.)?instagram\\.com/([^/]+)/(?:channel|igtv)/([A-Za-z0-9_-]+)/?.*", RegexOption.IGNORE_CASE),
-            // Share link formatı
-            Regex("(?:https?://)?(?:www\\.)?instagram\\.com/share/([A-Za-z0-9_-]+)/?.*", RegexOption.IGNORE_CASE)
-        ),
-        
-        // TIKTOK - Tüm formatlar
-        Platform.TIKTOK to listOf(
-            // Standart video linki
-            Regex("(?:https?://)?(?:www\\.)?tiktok\\.com/@([^/]+)/video/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // VM kısa link
-            Regex("(?:https?://)?(?:vm|vt)\\.tiktok\\.com/([A-Za-z0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // T kısa link
-            Regex("(?:https?://)?(?:www\\.)?tiktok\\.com/t/([A-Za-z0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Mobil link
-            Regex("(?:https?://)?(?:m\\.)?tiktok\\.com/v/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // @username/video formatı (parametre ile)
-            Regex("(?:https?://)?(?:www\\.)?tiktok\\.com/@[^/]+/video/([0-9]+)\\?.*", RegexOption.IGNORE_CASE),
-            // TikTok.com/@ formatı (sadece kullanıcı adı)
-            Regex("(?:https?://)?(?:www\\.)?tiktok\\.com/@([^/?]+)/?.*", RegexOption.IGNORE_CASE),
-            // Lite versiyon
-            Regex("(?:https?://)?(?:www\\.)?tiktok\\.com/share/video/([0-9]+)/?.*", RegexOption.IGNORE_CASE)
-        ),
-        
-        // TWITTER/X - Tüm formatlar
-        Platform.TWITTER to listOf(
-            // x.com standart
-            Regex("(?:https?://)?(?:www\\.)?x\\.com/([^/]+)/status/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // twitter.com standart
-            Regex("(?:https?://)?(?:www\\.)?twitter\\.com/([^/]+)/status/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Mobil twitter
-            Regex("(?:https?://)?mobile\\.twitter\\.com/([^/]+)/status/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Mobil x
-            Regex("(?:https?://)?mobile\\.x\\.com/([^/]+)/status/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // fxtwitter/vxtwitter (embed fix servisleri)
-            Regex("(?:https?://)?(?:www\\.)?(?:fx|vx)twitter\\.com/([^/]+)/status/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Nitter (alternatif frontend)
-            Regex("(?:https?://)?(?:www\\.)?nitter\\.[a-z]+/([^/]+)/status/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // t.co kısa link
-            Regex("(?:https?://)?t\\.co/([A-Za-z0-9]+)/?.*", RegexOption.IGNORE_CASE)
-        ),
-        
-        // YOUTUBE - Tüm formatlar  
-        Platform.YOUTUBE to listOf(
-            // Standart watch
-            Regex("(?:https?://)?(?:www\\.)?youtube\\.com/watch\\?v=([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // youtu.be kısa link
-            Regex("(?:https?://)?youtu\\.be/([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // Shorts
-            Regex("(?:https?://)?(?:www\\.)?youtube\\.com/shorts/([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // Mobil
-            Regex("(?:https?://)?m\\.youtube\\.com/watch\\?v=([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // Embed
-            Regex("(?:https?://)?(?:www\\.)?youtube\\.com/embed/([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // v/ formatı
-            Regex("(?:https?://)?(?:www\\.)?youtube\\.com/v/([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // Attribution link
-            Regex("(?:https?://)?(?:www\\.)?youtube\\.com/attribution_link.*v%3D([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // Live
-            Regex("(?:https?://)?(?:www\\.)?youtube\\.com/live/([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // Clip
-            Regex("(?:https?://)?(?:www\\.)?youtube\\.com/clip/([A-Za-z0-9_-]+).*", RegexOption.IGNORE_CASE),
-            // Nocookie embed
-            Regex("(?:https?://)?(?:www\\.)?youtube-nocookie\\.com/embed/([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE),
-            // Music
-            Regex("(?:https?://)?music\\.youtube\\.com/watch\\?v=([A-Za-z0-9_-]{11}).*", RegexOption.IGNORE_CASE)
-        ),
-        
-        // FACEBOOK - Tüm formatlar
-        Platform.FACEBOOK to listOf(
-            // Watch sayfası
-            Regex("(?:https?://)?(?:www\\.)?facebook\\.com/watch/\\?v=([0-9]+).*", RegexOption.IGNORE_CASE),
-            // Kullanıcı videoları
-            Regex("(?:https?://)?(?:www\\.)?facebook\\.com/([^/]+)/videos/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // fb.watch kısa link
-            Regex("(?:https?://)?fb\\.watch/([A-Za-z0-9_-]+)/?.*", RegexOption.IGNORE_CASE),
-            // Reel
-            Regex("(?:https?://)?(?:www\\.)?facebook\\.com/reel/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Video ID direkt
-            Regex("(?:https?://)?(?:www\\.)?facebook\\.com/video\\.php\\?v=([0-9]+).*", RegexOption.IGNORE_CASE),
-            // Story
-            Regex("(?:https?://)?(?:www\\.)?facebook\\.com/stories/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Mobil
-            Regex("(?:https?://)?m\\.facebook\\.com/watch/\\?v=([0-9]+).*", RegexOption.IGNORE_CASE),
-            // Mobil video
-            Regex("(?:https?://)?m\\.facebook\\.com/([^/]+)/videos/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Share formatı
-            Regex("(?:https?://)?(?:www\\.)?facebook\\.com/share/v/([A-Za-z0-9_-]+)/?.*", RegexOption.IGNORE_CASE),
-            // fb.gg gaming
-            Regex("(?:https?://)?fb\\.gg/v/([0-9]+)/?.*", RegexOption.IGNORE_CASE)
-        ),
-        
-        // PINTEREST - Tüm formatlar
-        Platform.PINTEREST to listOf(
-            // Standart pin
-            Regex("(?:https?://)?(?:www\\.)?pinterest\\.[a-z.]+/pin/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Kısa link
-            Regex("(?:https?://)?pin\\.it/([A-Za-z0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Pin ile başlık
-            Regex("(?:https?://)?(?:www\\.)?pinterest\\.[a-z.]+/pin/([0-9]+)/[^/]+/?.*", RegexOption.IGNORE_CASE),
-            // Türk domain dahil birçok ülke domaini
-            Regex("(?:https?://)?(?:tr|de|fr|es|it|br|jp|kr|in|uk|au|ca|mx)\\.pinterest\\.com/pin/([0-9]+)/?.*", RegexOption.IGNORE_CASE),
-            // Video pin
-            Regex("(?:https?://)?(?:www\\.)?pinterest\\.[a-z.]+/pin/create/video/([0-9]+)/?.*", RegexOption.IGNORE_CASE)
-        )
+    data class ClassifiedLink(
+        val platform: Platform,
+        val videoId: String?,
+        val cleanUrl: String,
+        val isValidUrl: Boolean,
+        val isSupportedPlatform: Boolean
     )
 
-    /**
-     * Verilen URL'yi analiz eder ve platform bilgisini döndürür
-     */
-    fun resolve(url: String): ResolveResult {
-        val cleanedUrl = url.trim()
-        
-        // Her platform için desenleri kontrol et
-        for ((platform, patterns) in platformPatterns) {
-            for (pattern in patterns) {
-                val match = pattern.find(cleanedUrl)
-                if (match != null) {
-                    // Video ID'yi çıkar (ilk veya ikinci grup olabilir)
-                    val videoId = match.groupValues.getOrNull(2)?.takeIf { it.isNotEmpty() }
-                        ?: match.groupValues.getOrNull(1)
-                    return ResolveResult(
-                        platform = platform,
-                        videoId = videoId,
-                        cleanUrl = normalizeUrl(cleanedUrl),
-                        isValid = true
-                    )
-                }
-            }
-        }
+    private val instagramIdPatterns = listOf(
+        Regex("/(?:p|reel|reels|tv|share)/([A-Za-z0-9_-]+)", RegexOption.IGNORE_CASE),
+        Regex("/stories/[^/]+/([0-9]+)", RegexOption.IGNORE_CASE)
+    )
 
-        // Hiçbir platforma uymadı
+    private val tikTokIdPatterns = listOf(
+        Regex("/@[^/]+/video/([0-9]+)", RegexOption.IGNORE_CASE),
+        Regex("/share/video/([0-9]+)", RegexOption.IGNORE_CASE),
+        Regex("/v/([0-9]+)", RegexOption.IGNORE_CASE),
+        Regex("/t/([A-Za-z0-9]+)", RegexOption.IGNORE_CASE)
+    )
+
+    private val twitterIdPatterns = listOf(
+        Regex("/status/([0-9]+)", RegexOption.IGNORE_CASE)
+    )
+
+    private val youtubeIdPatterns = listOf(
+        Regex("[?&]v=([A-Za-z0-9_-]{11})", RegexOption.IGNORE_CASE),
+        Regex("/shorts/([A-Za-z0-9_-]{11})", RegexOption.IGNORE_CASE),
+        Regex("/live/([A-Za-z0-9_-]{11})", RegexOption.IGNORE_CASE),
+        Regex("/embed/([A-Za-z0-9_-]{11})", RegexOption.IGNORE_CASE),
+        Regex("youtu\\.be/([A-Za-z0-9_-]{11})", RegexOption.IGNORE_CASE)
+    )
+
+    private val facebookIdPatterns = listOf(
+        Regex("[?&]v=([0-9]+)", RegexOption.IGNORE_CASE),
+        Regex("/videos/([0-9]+)", RegexOption.IGNORE_CASE),
+        Regex("/reel/([0-9]+)", RegexOption.IGNORE_CASE),
+        Regex("/share/v/([A-Za-z0-9_-]+)", RegexOption.IGNORE_CASE),
+        Regex("fb\\.watch/([A-Za-z0-9_-]+)", RegexOption.IGNORE_CASE)
+    )
+
+    private val pinterestIdPatterns = listOf(
+        Regex("/pin/([0-9]+)", RegexOption.IGNORE_CASE),
+        Regex("pin\\.it/([A-Za-z0-9]+)", RegexOption.IGNORE_CASE)
+    )
+
+    private val urlPattern = Regex(
+        pattern = """((?:https?://|//|www\.)[^\s<>()]+|[A-Za-z0-9.-]+\.(?:com|be|it|watch|gg|tv|me|net|org)/[^\s<>()]+)""",
+        option = RegexOption.IGNORE_CASE
+    )
+
+    fun resolve(url: String): ResolveResult {
+        val classified = classify(url)
         return ResolveResult(
-            platform = Platform.UNKNOWN,
-            videoId = null,
-            cleanUrl = cleanedUrl,
-            isValid = false
+            platform = classified.platform,
+            videoId = classified.videoId,
+            cleanUrl = classified.cleanUrl,
+            isValid = classified.isSupportedPlatform
         )
     }
 
-    /**
-     * URL'yi normalleştirir (https ekle, www. ekle vs)
-     */
-    private fun normalizeUrl(url: String): String {
-        var normalized = url.trim()
-        
-        // Protokol yoksa ekle
-        if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
-            normalized = "https://$normalized"
+    fun classify(url: String): ClassifiedLink {
+        val cleanUrl = normalizeUrl(url)
+        val host = parseHost(cleanUrl)
+        if (host == null) {
+            return ClassifiedLink(
+                platform = Platform.UNKNOWN,
+                videoId = null,
+                cleanUrl = cleanUrl,
+                isValidUrl = false,
+                isSupportedPlatform = false
+            )
         }
-        
-        // http'yi https'e çevir
-        normalized = normalized.replace("http://", "https://")
-        
-        return normalized
+
+        val platform = detectPlatformByHost(host) ?: Platform.UNKNOWN
+        val parsed = Uri.parse(cleanUrl)
+        val isValidUrl = !parsed.scheme.isNullOrBlank() && !parsed.host.isNullOrBlank()
+
+        return ClassifiedLink(
+            platform = platform,
+            videoId = extractVideoId(platform, cleanUrl),
+            cleanUrl = cleanUrl,
+            isValidUrl = isValidUrl,
+            isSupportedPlatform = platform != Platform.UNKNOWN
+        )
     }
 
-    /**
-     * URL'nin geçerli bir desteklenen link olup olmadığını kontrol eder
-     */
-    fun isSupported(url: String): Boolean {
-        return resolve(url).isValid
-    }
+    fun isSupported(url: String): Boolean = classify(url).isSupportedPlatform
 
-    /**
-     * URL'den platformu algılar
-     */
-    fun detectPlatform(url: String): Platform {
-        return resolve(url).platform
-    }
+    fun isValidUrl(url: String): Boolean = classify(url).isValidUrl
 
-    /**
-     * Paylaşılan metin içinden URL çıkarır
-     * Birden fazla URL varsa ilk desteklenen URL'yi döndürür
-     */
+    fun detectPlatform(url: String): Platform = classify(url).platform
+
     fun extractUrlFromText(text: String): String? {
-        val urlPattern = Regex("https?://[\\w\\-._~:/?#\\[\\]@!\$&'()*+,;=%]+")
-        val urls = urlPattern.findAll(text).map { it.value }.toList()
-        
-        // Önce desteklenen URL'yi bul
-        for (url in urls) {
-            if (isSupported(url)) {
-                return url
-            }
-        }
-        
-        // Desteklenen yoksa ilk URL'yi döndür
-        return urls.firstOrNull()
+        val urls = extractUrlsFromText(text)
+        return urls.firstOrNull(::isSupported) ?: urls.firstOrNull()
     }
 
-    /**
-     * Platform için örnek URL döndürür (kullanıcıya yardım için)
-     */
+    fun extractUrlsFromText(text: String): List<String> {
+        return urlPattern.findAll(text)
+            .map { it.value.trim().trimEnd('.', ',', ';', ')', ']') }
+            .map(::normalizeUrl)
+            .filter(::isValidUrl)
+            .distinct()
+            .toList()
+    }
+
     fun getExampleUrl(platform: Platform): String {
         return when (platform) {
             Platform.INSTAGRAM -> "https://www.instagram.com/reel/ABC123xyz/"
@@ -234,52 +131,123 @@ object LinkResolver {
         }
     }
 
-    /**
-     * Tüm desteklenen platformları ve örnek URL'leri döndürür
-     */
     fun getSupportedFormats(): Map<Platform, List<String>> {
         return mapOf(
             Platform.INSTAGRAM to listOf(
-                "instagram.com/p/xxx",
                 "instagram.com/reel/xxx",
-                "instagram.com/reels/xxx",
-                "instagram.com/tv/xxx",
-                "instagram.com/stories/user/xxx",
-                "instagr.am/p/xxx"
+                "instagram.com/p/xxx",
+                "instagram.com/share/xxx",
+                "instagr.am/reel/xxx"
             ),
             Platform.TIKTOK to listOf(
                 "tiktok.com/@user/video/xxx",
                 "vm.tiktok.com/xxx",
                 "vt.tiktok.com/xxx",
-                "tiktok.com/t/xxx",
-                "m.tiktok.com/v/xxx"
+                "tiktok.com/t/xxx"
             ),
             Platform.TWITTER to listOf(
-                "twitter.com/user/status/xxx",
                 "x.com/user/status/xxx",
-                "mobile.twitter.com/user/status/xxx",
-                "t.co/xxx"
+                "twitter.com/user/status/xxx",
+                "vxtwitter.com/user/status/xxx",
+                "mobile.twitter.com/user/status/xxx"
             ),
             Platform.YOUTUBE to listOf(
                 "youtube.com/watch?v=xxx",
                 "youtu.be/xxx",
                 "youtube.com/shorts/xxx",
-                "youtube.com/embed/xxx",
-                "youtube.com/live/xxx",
                 "music.youtube.com/watch?v=xxx"
             ),
             Platform.FACEBOOK to listOf(
                 "facebook.com/watch/?v=xxx",
                 "facebook.com/user/videos/xxx",
-                "fb.watch/xxx",
                 "facebook.com/reel/xxx",
-                "m.facebook.com/watch/?v=xxx"
+                "fb.watch/xxx"
             ),
             Platform.PINTEREST to listOf(
                 "pinterest.com/pin/xxx",
-                "pin.it/xxx",
-                "tr.pinterest.com/pin/xxx"
+                "tr.pinterest.com/pin/xxx",
+                "pin.it/xxx"
             )
         )
+    }
+
+    private fun normalizeUrl(url: String): String {
+        val trimmed = url.trim()
+        if (trimmed.isBlank()) {
+            return trimmed
+        }
+
+        val withScheme = when {
+            trimmed.startsWith("http://", true) ||
+                trimmed.startsWith("https://", true) -> trimmed
+
+            trimmed.startsWith("//") -> "https:$trimmed"
+            else -> "https://$trimmed"
+        }
+
+        return withScheme.replaceFirst("http://", "https://")
+    }
+
+    private fun parseHost(url: String): String? {
+        val host = runCatching { Uri.parse(url).host }.getOrNull()
+        return host?.lowercase(Locale.US)?.removePrefix("www.")
+    }
+
+    private fun detectPlatformByHost(host: String): Platform? {
+        return when {
+            host == "instagram.com" || host.endsWith(".instagram.com") || host == "instagr.am" ->
+                Platform.INSTAGRAM
+
+            host == "tiktok.com" || host.endsWith(".tiktok.com") ->
+                Platform.TIKTOK
+
+            host == "x.com" ||
+                host.endsWith(".x.com") ||
+                host == "twitter.com" ||
+                host.endsWith(".twitter.com") ||
+                host == "vxtwitter.com" ||
+                host.endsWith(".vxtwitter.com") ||
+                host == "fxtwitter.com" ||
+                host.endsWith(".fxtwitter.com") ||
+                host.startsWith("nitter.") ->
+                Platform.TWITTER
+
+            host == "youtube.com" ||
+                host.endsWith(".youtube.com") ||
+                host == "youtu.be" ||
+                host == "youtube-nocookie.com" ||
+                host.endsWith(".youtube-nocookie.com") ->
+                Platform.YOUTUBE
+
+            host == "facebook.com" ||
+                host.endsWith(".facebook.com") ||
+                host == "fb.watch" ||
+                host == "fb.gg" ->
+                Platform.FACEBOOK
+
+            host == "pin.it" ||
+                host == "pinterest.com" ||
+                host.endsWith(".pinterest.com") ||
+                host.contains("pinterest.") ->
+                Platform.PINTEREST
+
+            else -> null
+        }
+    }
+
+    private fun extractVideoId(platform: Platform, url: String): String? {
+        val patterns = when (platform) {
+            Platform.INSTAGRAM -> instagramIdPatterns
+            Platform.TIKTOK -> tikTokIdPatterns
+            Platform.TWITTER -> twitterIdPatterns
+            Platform.YOUTUBE -> youtubeIdPatterns
+            Platform.FACEBOOK -> facebookIdPatterns
+            Platform.PINTEREST -> pinterestIdPatterns
+            Platform.UNKNOWN -> emptyList()
+        }
+
+        return patterns.firstNotNullOfOrNull { pattern ->
+            pattern.find(url)?.groupValues?.getOrNull(1)?.takeIf { it.isNotBlank() }
+        }
     }
 }

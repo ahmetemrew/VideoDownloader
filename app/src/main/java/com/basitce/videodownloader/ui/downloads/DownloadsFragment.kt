@@ -1,18 +1,24 @@
 package com.basitce.videodownloader.ui.downloads
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.basitce.videodownloader.R
+import com.basitce.videodownloader.data.GallerySaver
 import com.basitce.videodownloader.data.model.DownloadItem
 import com.basitce.videodownloader.data.model.DownloadStatus
 import com.basitce.videodownloader.data.repository.DownloadRepository
@@ -20,8 +26,10 @@ import com.basitce.videodownloader.databinding.FragmentDownloadsBinding
 import com.basitce.videodownloader.databinding.ItemDownloadBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.io.File
 
 class DownloadsFragment : Fragment() {
 
@@ -31,7 +39,8 @@ class DownloadsFragment : Fragment() {
     private lateinit var downloadAdapter: DownloadAdapter
     private lateinit var downloadRepository: DownloadRepository
     private lateinit var recyclerView: RecyclerView
-    private var currentTab = 0 // 0: Completed, 1: Active, 2: Failed
+    private var currentTab = 0
+    private var loadJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,6 +54,11 @@ class DownloadsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         downloadRepository = DownloadRepository(requireContext())
+
+        binding.emptyActionButton.setOnClickListener {
+            findNavController().navigate(R.id.universalFragment)
+        }
+
         setupTabs()
         setupRecyclerView()
         loadDownloads()
@@ -56,8 +70,10 @@ class DownloadsFragment : Fragment() {
                 currentTab = tab.position
                 loadDownloads()
             }
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
-            override fun onTabReselected(tab: TabLayout.Tab) {}
+
+            override fun onTabUnselected(tab: TabLayout.Tab) = Unit
+
+            override fun onTabReselected(tab: TabLayout.Tab) = Unit
         })
     }
 
@@ -65,8 +81,7 @@ class DownloadsFragment : Fragment() {
         downloadAdapter = DownloadAdapter(
             onItemClick = { download ->
                 if (download.status == DownloadStatus.COMPLETED) {
-                    Toast.makeText(context, "Video: ${download.customFileName}", Toast.LENGTH_SHORT).show()
-                    // TODO: Video oynatıcı aç
+                    openDownload(download)
                 }
             },
             onMoreClick = { download, view ->
@@ -74,14 +89,15 @@ class DownloadsFragment : Fragment() {
             }
         )
 
-        // ViewPager yerine RecyclerView kullan
         binding.viewPager.isVisible = false
-        
+
         recyclerView = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(context)
             adapter = downloadAdapter
+            clipToPadding = false
+            setPadding(0, 14, 0, 124)
         }
-        
+
         (binding.viewPager.parent as? ViewGroup)?.let { parent ->
             val index = parent.indexOfChild(binding.viewPager)
             parent.removeView(binding.viewPager)
@@ -92,14 +108,15 @@ class DownloadsFragment : Fragment() {
     }
 
     private fun loadDownloads() {
-        viewLifecycleOwner.lifecycleScope.launch {
+        loadJob?.cancel()
+        loadJob = viewLifecycleOwner.lifecycleScope.launch {
             val flow = when (currentTab) {
                 0 -> downloadRepository.getCompletedDownloads()
                 1 -> downloadRepository.getActiveDownloads()
                 2 -> downloadRepository.getFailedDownloads()
                 else -> downloadRepository.getAllDownloads()
             }
-            
+
             flow.collectLatest { downloads ->
                 downloadAdapter.submitList(downloads)
                 binding.emptyState.isVisible = downloads.isEmpty()
@@ -111,26 +128,74 @@ class DownloadsFragment : Fragment() {
     private fun showPopupMenu(download: DownloadItem, anchor: View) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menuInflater.inflate(R.menu.menu_download_item, popup.menu)
-        
+        popup.menu.findItem(R.id.action_gallery)?.title = if (download.isSavedToGallery()) {
+            getString(R.string.action_open_in_gallery)
+        } else {
+            getString(R.string.action_add_to_gallery)
+        }
+
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_share -> {
                     shareDownload(download)
                     true
                 }
+
+                R.id.action_gallery -> {
+                    handleGalleryAction(download)
+                    true
+                }
+
                 R.id.action_delete -> {
                     confirmDelete(download)
                     true
                 }
+
                 else -> false
             }
         }
         popup.show()
     }
 
+    private fun handleGalleryAction(download: DownloadItem) {
+        if (download.isSavedToGallery()) {
+            openInGallery(download)
+            return
+        }
+
+        val filePath = download.filePath
+        if (filePath.isNullOrBlank()) {
+            Toast.makeText(context, R.string.error_download_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val galleryUri = GallerySaver.scanIntoGallery(requireContext(), filePath)
+            if (galleryUri == null) {
+                Toast.makeText(context, R.string.error_download_failed, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            downloadRepository.markGallerySaved(download.id, galleryUri.toString())
+            Toast.makeText(context, R.string.action_add_to_gallery, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun shareDownload(download: DownloadItem) {
-        // TODO: Video paylaş
-        Toast.makeText(context, "Paylaşılıyor: ${download.customFileName}", Toast.LENGTH_SHORT).show()
+        val contentUri = resolveDownloadUri(download)
+        if (contentUri == null) {
+            Toast.makeText(context, R.string.error_download_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = resolveMimeType(download)
+            putExtra(Intent.EXTRA_STREAM, contentUri)
+            putExtra(Intent.EXTRA_SUBJECT, download.customFileName)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        startActivity(Intent.createChooser(shareIntent, getString(R.string.action_share)))
     }
 
     private fun confirmDelete(download: DownloadItem) {
@@ -151,15 +216,79 @@ class DownloadsFragment : Fragment() {
         }
     }
 
+    private fun openDownload(download: DownloadItem) {
+        val contentUri = resolveDownloadUri(download)
+        if (contentUri == null) {
+            Toast.makeText(context, R.string.error_download_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(contentUri, resolveMimeType(download))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(context, R.string.error_download_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openInGallery(download: DownloadItem) {
+        val uri = download.galleryUri?.let(Uri::parse) ?: resolveDownloadUri(download)
+        if (uri == null) {
+            Toast.makeText(context, R.string.error_download_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, resolveMimeType(download))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(context, R.string.error_download_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun resolveDownloadUri(download: DownloadItem): Uri? {
+        val path = download.filePath ?: return null
+        if (path.startsWith("content://")) {
+            return Uri.parse(path)
+        }
+
+        val file = File(path)
+        if (!file.exists()) {
+            return null
+        }
+
+        return FileProvider.getUriForFile(
+            requireContext(),
+            "${requireContext().packageName}.fileprovider",
+            file
+        )
+    }
+
+    private fun resolveMimeType(download: DownloadItem): String {
+        val path = download.filePath.orEmpty().lowercase()
+        return when {
+            path.endsWith(".mp3") || path.endsWith(".m4a") || download.quality.resolution.equals("MP3", ignoreCase = true) ->
+                "audio/*"
+
+            else -> "video/*"
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        loadJob?.cancel()
         _binding = null
     }
 }
 
-/**
- * İndirme listesi için RecyclerView adapter
- */
 class DownloadAdapter(
     private val onItemClick: (DownloadItem) -> Unit,
     private val onMoreClick: (DownloadItem, View) -> Unit
@@ -193,54 +322,64 @@ class DownloadAdapter(
 
         fun bind(item: DownloadItem) {
             binding.apply {
-                // Thumbnail
                 item.thumbnailUrl?.let { url ->
                     thumbnail.load(url) {
                         crossfade(true)
                     }
                 }
 
-                // Platform badge
                 platformBadge.setImageResource(item.platform.iconRes)
-
-                // Title & info
                 title.text = item.customFileName
-                quality.text = item.quality.resolution
-                size.text = item.getFormattedSize()
+                quality.text = item.getDisplayQualityLabel()
+                size.text = item.getFormattedSize().ifBlank { item.getStatusText() }
 
-                // Status göstergeleri
                 when (item.status) {
                     DownloadStatus.COMPLETED -> {
                         statusCompleted.isVisible = true
                         progressText.isVisible = false
                         statusFailed.isVisible = false
                         progressBar.isVisible = false
+                        progressBar.isIndeterminate = false
                     }
-                    DownloadStatus.DOWNLOADING, DownloadStatus.PENDING -> {
+
+                    DownloadStatus.DOWNLOADING -> {
                         statusCompleted.isVisible = false
                         progressText.isVisible = true
                         progressText.text = "${item.progress}%"
                         statusFailed.isVisible = false
                         progressBar.isVisible = true
+                        progressBar.isIndeterminate = false
                         progressBar.progress = item.progress
                     }
+
+                    DownloadStatus.PENDING -> {
+                        statusCompleted.isVisible = false
+                        progressText.isVisible = true
+                        progressText.text = root.context.getString(R.string.status_pending)
+                        statusFailed.isVisible = false
+                        progressBar.isVisible = true
+                        progressBar.isIndeterminate = true
+                    }
+
                     DownloadStatus.FAILED -> {
                         statusCompleted.isVisible = false
                         progressText.isVisible = false
                         statusFailed.isVisible = true
                         progressBar.isVisible = false
+                        progressBar.isIndeterminate = false
                     }
+
                     DownloadStatus.PAUSED -> {
                         statusCompleted.isVisible = false
                         progressText.isVisible = true
-                        progressText.text = "⏸"
+                        progressText.text = "Pause"
                         statusFailed.isVisible = false
                         progressBar.isVisible = true
+                        progressBar.isIndeterminate = false
                         progressBar.progress = item.progress
                     }
                 }
 
-                // Click listeners
                 downloadCard.setOnClickListener { onItemClick(item) }
                 btnMore.setOnClickListener { onMoreClick(item, it) }
             }
