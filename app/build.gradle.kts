@@ -4,6 +4,15 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val defaultAbiFilters = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+val configuredAbiFilters = providers.gradleProperty("appAbiFilters")
+    .orNull
+    ?.split(",")
+    ?.map(String::trim)
+    ?.filter(String::isNotEmpty)
+    ?.takeIf { it.isNotEmpty() }
+    ?: defaultAbiFilters
+
 android {
     namespace = "com.basitce.videodownloader"
     compileSdk = 35
@@ -19,7 +28,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            abiFilters += configuredAbiFilters
         }
     }
 

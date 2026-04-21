@@ -15,23 +15,22 @@ import com.basitce.videodownloader.MainActivity
 import com.basitce.videodownloader.R
 
 /**
- * İndirme bildirimlerini yöneten helper sınıf
+ * İndirme bildirimlerini yöneten yardımcı sınıf.
  */
 object NotificationHelper {
 
     private const val CHANNEL_ID_PROGRESS = "download_progress"
     private const val CHANNEL_ID_COMPLETE = "download_complete"
-    private const val CHANNEL_NAME_PROGRESS = "İndirme İlerlemesi"
-    private const val CHANNEL_NAME_COMPLETE = "İndirme Tamamlandı"
+    private const val CHANNEL_NAME_PROGRESS = "İndirme ilerlemesi"
+    private const val CHANNEL_NAME_COMPLETE = "İndirme tamamlandı"
 
     /**
-     * Bildirim kanallarını oluştur (Android 8+)
+     * Bildirim kanallarını oluşturur.
      */
     fun createNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            // İlerleme kanalı (sessiz)
             val progressChannel = NotificationChannel(
                 CHANNEL_ID_PROGRESS,
                 CHANNEL_NAME_PROGRESS,
@@ -43,13 +42,12 @@ object NotificationHelper {
             }
             manager.createNotificationChannel(progressChannel)
 
-            // Tamamlandı kanalı (sesli)
             val completeChannel = NotificationChannel(
                 CHANNEL_ID_COMPLETE,
                 CHANNEL_NAME_COMPLETE,
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "İndirme tamamlandı bildirimleri"
+                description = "Tamamlanan indirme bildirimleri"
                 setShowBadge(true)
             }
             manager.createNotificationChannel(completeChannel)
@@ -57,7 +55,7 @@ object NotificationHelper {
     }
 
     /**
-     * İndirme ilerlemesi bildirimi göster
+     * İndirme ilerlemesi bildirimi gösterir.
      */
     fun showDownloadProgress(context: Context, downloadId: Long, fileName: String, progress: Int) {
         if (!hasNotificationPermission(context)) return
@@ -66,7 +64,9 @@ object NotificationHelper {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, downloadId.toInt(), intent,
+            context,
+            downloadId.toInt(),
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -84,18 +84,17 @@ object NotificationHelper {
 
         try {
             NotificationManagerCompat.from(context).notify(downloadId.toInt(), notification)
-        } catch (e: SecurityException) {
-            // İzin yok, sessizce devam et
+        } catch (_: SecurityException) {
+            // Bildirim izni yoksa sessizce devam et.
         }
     }
 
     /**
-     * İndirme tamamlandı bildirimi göster
+     * İndirme tamamlandı bildirimi gösterir.
      */
     fun showDownloadComplete(context: Context, downloadId: Long, fileName: String) {
         if (!hasNotificationPermission(context)) return
 
-        // Önce ilerleme bildirimini kaldır
         cancelNotification(context, downloadId)
 
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -103,12 +102,14 @@ object NotificationHelper {
             putExtra("navigate_to", "downloads")
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, downloadId.toInt() + 1000, intent,
+            context,
+            downloadId.toInt() + 1000,
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_COMPLETE)
-            .setContentTitle("İndirme tamamlandı ✓")
+            .setContentTitle("İndirme tamamlandı")
             .setContentText(fileName)
             .setSmallIcon(R.drawable.ic_check_circle)
             .setAutoCancel(true)
@@ -119,22 +120,21 @@ object NotificationHelper {
 
         try {
             NotificationManagerCompat.from(context).notify(downloadId.toInt() + 1000, notification)
-        } catch (e: SecurityException) {
-            // İzin yok
+        } catch (_: SecurityException) {
+            // Bildirim izni yok.
         }
     }
 
     /**
-     * İndirme başarısız bildirimi göster
+     * İndirme başarısız bildirimi gösterir.
      */
     fun showDownloadFailed(context: Context, downloadId: Long, fileName: String, error: String) {
         if (!hasNotificationPermission(context)) return
 
-        // Önce ilerleme bildirimini kaldır
         cancelNotification(context, downloadId)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_COMPLETE)
-            .setContentTitle("İndirme başarısız ✗")
+            .setContentTitle("İndirme başarısız")
             .setContentText(fileName)
             .setStyle(NotificationCompat.BigTextStyle().bigText("$fileName\n$error"))
             .setSmallIcon(R.drawable.ic_error)
@@ -145,35 +145,35 @@ object NotificationHelper {
 
         try {
             NotificationManagerCompat.from(context).notify(downloadId.toInt() + 2000, notification)
-        } catch (e: SecurityException) {
-            // İzin yok
+        } catch (_: SecurityException) {
+            // Bildirim izni yok.
         }
     }
 
     /**
-     * Bildirimi kaldır
+     * Belirli bir bildirimi kaldırır.
      */
     fun cancelNotification(context: Context, downloadId: Long) {
         try {
             NotificationManagerCompat.from(context).cancel(downloadId.toInt())
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ignore
         }
     }
 
     /**
-     * Tüm bildirimleri kaldır
+     * Tüm bildirimleri kaldırır.
      */
     fun cancelAllNotifications(context: Context) {
         try {
             NotificationManagerCompat.from(context).cancelAll()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ignore
         }
     }
 
     /**
-     * Eski sÃ¼rÃ¼mlerden kalmÄ±ÅŸ takÄ±lÄ± ilerleme bildirimlerini temizler
+     * Eski sürümlerden kalan takılı ilerleme bildirimlerini temizler.
      */
     fun cancelStaleProgressNotifications(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -185,13 +185,13 @@ object NotificationHelper {
             manager.activeNotifications
                 ?.filter { it.notification.channelId == CHANNEL_ID_PROGRESS }
                 ?.forEach { manager.cancel(it.id) }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ignore
         }
     }
 
     /**
-     * Bildirim izni var mı kontrol et
+     * Bildirim izni olup olmadığını kontrol eder.
      */
     private fun hasNotificationPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

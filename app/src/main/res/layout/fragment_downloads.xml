@@ -22,7 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Aktif sirayi, tamamlanan kayitlari ve hatali denemeleri tek yerden yonet."
+        android:text="@string/downloads_subtitle"
         android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
         android:textColor="@color/text_secondary" />
 
@@ -52,12 +52,12 @@
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tab_completed" />
+                android:text="@string/tab_active" />
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/tab_active" />
+                android:text="@string/tab_completed" />
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
@@ -133,7 +133,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
-                    android:text="Yeni indirme baslat" />
+                    android:text="@string/downloads_empty_action" />
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>

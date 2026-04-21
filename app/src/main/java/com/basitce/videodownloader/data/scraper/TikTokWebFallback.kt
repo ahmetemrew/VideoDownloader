@@ -51,13 +51,11 @@ object TikTokWebFallback {
         try {
             call.execute().use { response ->
                 if (!response.isSuccessful) {
-                    throw IOException(
-                        "TikTok video akisi indirilemedi (HTTP ${response.code})"
-                    )
+                    throw IOException("TikTok video akışı indirilemedi (HTTP ${response.code})")
                 }
 
                 val body = response.body
-                    ?: throw IOException("TikTok video icerigi bos geldi")
+                    ?: throw IOException("TikTok video içeriği boş geldi")
                 val totalBytes = body.contentLength().takeIf { it > 0 } ?: media.fileSize
 
                 body.byteStream().use { input ->
@@ -106,22 +104,22 @@ object TikTokWebFallback {
 
         val html = client.newCall(pageRequest).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IOException("TikTok sayfasi yuklenemedi (HTTP ${response.code})")
+                throw IOException("TikTok sayfası yüklenemedi (HTTP ${response.code})")
             }
             response.body?.string()?.takeIf { it.isNotBlank() }
-                ?: throw IOException("TikTok sayfasi bos dondu")
+                ?: throw IOException("TikTok sayfası boş döndü")
         }
 
         val item = parseItemStruct(html)
         val video = item.optJSONObject("video")
-            ?: throw IOException("TikTok video verisi bulunamadi")
+            ?: throw IOException("TikTok video verisi bulunamadı")
         val directUrl = video.optString("playAddr").nullIfBlank()
             ?: video.optString("downloadAddr").nullIfBlank()
-            ?: throw IOException("TikTok dogrudan video adresi bulunamadi")
+            ?: throw IOException("TikTok doğrudan video adresi bulunamadı")
 
         return ResolvedMedia(
             id = item.optString("id").nullIfBlank()
-                ?: throw IOException("TikTok video kimligi bulunamadi"),
+                ?: throw IOException("TikTok video kimliği bulunamadı"),
             title = item.optString("desc").nullIfBlank(),
             description = item.optString("desc").nullIfBlank(),
             author = item.optJSONObject("author")?.run {
@@ -164,7 +162,7 @@ object TikTokWebFallback {
             ?.optJSONObject("itemStruct")
             ?.let { return it }
 
-        throw IOException("TikTok fallback JSON verisi bulunamadi")
+        throw IOException("TikTok yedek JSON verisi bulunamadı")
     }
 
     private fun probeFileSize(client: OkHttpClient, directUrl: String): Long? {
@@ -248,7 +246,7 @@ object TikTokWebFallback {
         fun toPreviewResult(): PreviewResult {
             return PreviewResult(
                 id = id,
-                title = title ?: "TikTok Video #$id",
+                title = title ?: "TikTok videosu #$id",
                 description = description,
                 author = author,
                 thumbnailUrl = thumbnailUrl,

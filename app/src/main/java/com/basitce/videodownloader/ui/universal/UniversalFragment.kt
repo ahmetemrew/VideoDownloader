@@ -181,7 +181,7 @@ class UniversalFragment : Fragment() {
             val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = clipboard.primaryClip
             if (clip == null || clip.itemCount == 0) {
-                showError("Panoda kopyalanmis link yok")
+                showError(getString(R.string.clipboard_empty))
                 return
             }
 
@@ -192,10 +192,20 @@ class UniversalFragment : Fragment() {
             if (LinkResolver.isSupported(url)) {
                 previewViewModel.fetchVideoInfo(url)
             } else if (url.isNotBlank()) {
-                showError("Bu link desteklenmiyor. Desteklenen platformlar: Instagram, TikTok, Twitter/X, YouTube, Facebook, Pinterest")
+                showError(
+                    getString(
+                        R.string.unsupported_platform_message,
+                        getString(R.string.unsupported_platforms)
+                    )
+                )
             }
         } catch (e: Exception) {
-            showError("Pano okunamadi: ${e.message}")
+            showError(
+                getString(
+                    R.string.clipboard_read_error,
+                    e.message ?: getString(R.string.error_unknown_detail)
+                )
+            )
         }
     }
 
@@ -213,7 +223,7 @@ class UniversalFragment : Fragment() {
             binding.platformName.setTextColor(resources.getColor(R.color.success, null))
         } else {
             binding.platformIcon.setImageResource(R.drawable.ic_link)
-            binding.platformName.text = "Platform taninmadi"
+            binding.platformName.text = getString(R.string.universal_platform_unknown)
             binding.platformName.setTextColor(resources.getColor(R.color.warning, null))
         }
     }
@@ -222,12 +232,17 @@ class UniversalFragment : Fragment() {
         val url = binding.urlInput.text?.toString()?.trim() ?: ""
 
         if (url.isBlank()) {
-            showError("Lutfen bir video linki girin")
+            showError(getString(R.string.empty_url))
             return
         }
 
         if (!LinkResolver.isSupported(url)) {
-            showError("Bu platform desteklenmiyor.\n\nDesteklenen: Instagram, TikTok, Twitter/X, YouTube, Facebook, Pinterest")
+            showError(
+                getString(
+                    R.string.unsupported_platform_message,
+                    getString(R.string.unsupported_platforms)
+                )
+            )
             return
         }
 
@@ -264,7 +279,7 @@ class UniversalFragment : Fragment() {
             binding.btnDownload.isEnabled = true
         } else {
             binding.qualityChips.removeAllViews()
-            binding.fileSizeInfo.text = "Video URL bulunamadi. Bu platform videoyu koruma altinda tutuyor olabilir."
+            binding.fileSizeInfo.text = getString(R.string.missing_direct_url)
             binding.fileSizeInfo.setTextColor(resources.getColor(R.color.warning, null))
             binding.btnDownload.isEnabled = false
         }
@@ -297,9 +312,9 @@ class UniversalFragment : Fragment() {
 
     private fun updateFileSizeInfo(quality: AvailableQuality) {
         val sizeText = if (quality.fileSize != null) {
-            "Tahmini boyut: ${quality.getFormattedSize()}"
+            getString(R.string.estimated_file_size, quality.getFormattedSize())
         } else {
-            "Indirmeye hazir"
+            getString(R.string.download_ready)
         }
         binding.fileSizeInfo.text = sizeText
         binding.fileSizeInfo.setTextColor(resources.getColor(R.color.success, null))
@@ -312,7 +327,7 @@ class UniversalFragment : Fragment() {
         val customFileName = binding.filenameInput.text?.toString()?.trim()?.ifBlank { videoInfo.title } ?: videoInfo.title
 
         if (quality.url.isBlank()) {
-            showError("Video URL bulunamadi. Lutfen farkli bir link deneyin.")
+            showError(getString(R.string.missing_download_url))
             return
         }
 
@@ -332,10 +347,11 @@ class UniversalFragment : Fragment() {
 
             val queuedCount = downloadManager.getQueuedCount()
             val activeCount = downloadManager.getActiveCount()
-            val message = if (activeCount > 0 || queuedCount > 0) {
-                "Kuyruga eklendi (${activeCount + queuedCount} indirme)"
+            val totalDownloads = activeCount + queuedCount
+            val message = if (totalDownloads > 1) {
+                getString(R.string.queue_added_multiple, totalDownloads)
             } else {
-                "Indirme basladi: $customFileName"
+                getString(R.string.download_started_named, customFileName)
             }
             showSuccess(message)
             previewViewModel.reset()
@@ -344,27 +360,33 @@ class UniversalFragment : Fragment() {
 
     private fun formatFetchErrorMessage(error: Throwable): String {
         return when (error) {
-            is UnknownHostException -> "Internet baglantisi yok. Lutfen baglantinizi kontrol edin."
-            is SocketTimeoutException -> "Baglanti zaman asimina ugradi. Tekrar deneyin."
-            is IOException -> "Ag hatasi olustu: ${error.message}"
+            is UnknownHostException -> getString(R.string.error_no_connection_detail)
+            is SocketTimeoutException -> getString(R.string.error_timeout_detail)
+            is IOException -> getString(
+                R.string.error_network_detail,
+                error.message ?: getString(R.string.error_unknown_detail)
+            )
             else -> {
-                val message = error.message ?: "Bilinmeyen hata"
+                val message = error.message ?: getString(R.string.error_unknown_detail)
                 when {
                     message.contains("Video not available, status code 0", ignoreCase = true) ->
-                        "TikTok bu video icin hem standart web akisinda hem de uygulama extractor tarafinda veri vermedi."
+                        getString(R.string.error_tiktok_status_0)
                     message.contains("Unable to extract webpage video data", ignoreCase = true) ->
-                        "TikTok web sayfasindan video verisi okunamadi."
+                        getString(R.string.error_tiktok_extract)
                     message.contains("status code 10204", ignoreCase = true) ->
-                        "TikTok bu videoyu mevcut IP ile engelliyor. Farkli bir paylasim linki veya farkli ag deneyin."
+                        getString(R.string.error_tiktok_ip_block)
                     message.contains("fallback", ignoreCase = true) && message.contains("TikTok", ignoreCase = true) ->
-                        "TikTok fallback akisi da basarisiz oldu. Video gecici olarak TikTok tarafinda kisitli olabilir."
-                    message.contains("video", ignoreCase = true) && message.contains("bulunamadi", ignoreCase = true) ->
-                        "Video bulunamadi. Link dogru mu kontrol edin."
+                        getString(R.string.error_tiktok_fallback)
+                    message.contains("video", ignoreCase = true) && (
+                        message.contains("bulunamadı", ignoreCase = true) ||
+                            message.contains("bulunamadi", ignoreCase = true)
+                        ) ->
+                        getString(R.string.error_video_not_found_detail)
                     message.contains("permission", ignoreCase = true) ->
-                        "Erisim izni reddedildi. Bu video gizli olabilir."
+                        getString(R.string.error_permission_private)
                     message.contains("404") ->
-                        "Sayfa bulunamadi. Video silinmis olabilir."
-                    else -> "Hata: $message"
+                        getString(R.string.error_page_not_found_detail)
+                    else -> getString(R.string.error_prefix, message)
                 }
             }
         }

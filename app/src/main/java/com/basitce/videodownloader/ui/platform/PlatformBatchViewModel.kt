@@ -93,7 +93,7 @@ class PlatformBatchViewModel(
         val extractedLinks = PlatformBatchPlanner.extractPendingLinks(rawText)
         if (extractedLinks.isEmpty()) {
             if (showEmptyFeedback) {
-                _events.tryEmit("Ayıklanabilir yeni link bulunamadı.")
+                _events.tryEmit("Ayıklanabilir yeni bağlantı bulunamadı.")
             }
             return
         }
@@ -105,7 +105,7 @@ class PlatformBatchViewModel(
 
         if (mergedLinks.size == _uiState.value.pendingLinks.size) {
             if (showEmptyFeedback) {
-                _events.tryEmit("Eklenebilecek yeni link bulunamadı.")
+                _events.tryEmit("Eklenebilecek yeni bağlantı bulunamadı.")
             }
             return
         }
@@ -156,7 +156,7 @@ class PlatformBatchViewModel(
     fun startBatch() {
         val currentState = _uiState.value
         if (currentState.pendingLinks.isEmpty()) {
-            _events.tryEmit("Önce en az bir link ekle.")
+            _events.tryEmit("Önce en az bir bağlantı ekle.")
             return
         }
 
@@ -329,9 +329,9 @@ internal object PlatformBatchPlanner {
 
     fun readyCountText(count: Int): String {
         return when (count) {
-            0 -> "Hazır link yok"
-            1 -> "1 link hazır"
-            else -> "$count link hazır"
+            0 -> "Hazır bağlantı yok"
+            1 -> "1 bağlantı hazır"
+            else -> "$count bağlantı hazır"
         }
     }
 

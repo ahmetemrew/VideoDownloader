@@ -116,7 +116,7 @@ class DownloadManager private constructor(private val context: Context) {
 
     fun cancelDownload(downloadId: Long) {
         scope.launch {
-            downloadRepository.markFailed(downloadId, "Iptal edildi")
+            downloadRepository.markFailed(downloadId, "İptal edildi")
         }
         DownloadService.cancelDownload(context, downloadId)
         NotificationHelper.cancelNotification(context, downloadId)

@@ -26,7 +26,7 @@ enum class Platform(
         description = "Filigransız video"
     ),
     TWITTER(
-        displayName = "X (Twitter)",
+        displayName = "X",
         shortName = "X",
         colorRes = R.color.twitter,
         iconRes = R.drawable.ic_twitter,

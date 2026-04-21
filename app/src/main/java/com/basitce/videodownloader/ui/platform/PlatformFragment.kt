@@ -328,12 +328,15 @@ private class BatchDownloadAdapter :
             }
 
             val detailText = when (item.status) {
-                DownloadStatus.PENDING -> "Kuyrukta sıraya alındı."
-                DownloadStatus.DOWNLOADING -> "İndirme sürüyor."
-                DownloadStatus.COMPLETED -> item.getFormattedSize().ifBlank { "Dosya hazır." }
-                DownloadStatus.FAILED -> item.errorMessage?.ifBlank { "İndirme başarısız oldu." }
-                    ?: "İndirme başarısız oldu."
-                DownloadStatus.PAUSED -> "İndirme duraklatıldı."
+                DownloadStatus.PENDING -> context.getString(R.string.bulk_detail_pending)
+                DownloadStatus.DOWNLOADING -> context.getString(R.string.bulk_detail_downloading)
+                DownloadStatus.COMPLETED -> item.getFormattedSize().ifBlank {
+                    context.getString(R.string.bulk_detail_ready)
+                }
+                DownloadStatus.FAILED -> item.errorMessage?.ifBlank {
+                    context.getString(R.string.bulk_detail_failed)
+                } ?: context.getString(R.string.bulk_detail_failed)
+                DownloadStatus.PAUSED -> context.getString(R.string.bulk_detail_paused)
             }
 
             binding.detailText.text = detailText
@@ -343,7 +346,8 @@ private class BatchDownloadAdapter :
                     if (item.status == DownloadStatus.FAILED) R.color.error else R.color.text_secondary
                 )
             )
-            binding.errorText.isVisible = item.status == DownloadStatus.FAILED && !item.errorMessage.isNullOrBlank()
+            binding.errorText.isVisible =
+                item.status == DownloadStatus.FAILED && !item.errorMessage.isNullOrBlank()
             binding.errorText.text = item.errorMessage
         }
     }

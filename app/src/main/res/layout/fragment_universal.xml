@@ -21,22 +21,22 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:background="@drawable/bg_hero_card"
-            android:padding="24dp">
+            android:orientation="vertical"
+            android:padding="22dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/universal_title"
-                android:textAppearance="@style/TextAppearance.Material3.DisplaySmall"
+                android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
                 android:textColor="@android:color/white"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
                 android:text="@string/universal_subtitle"
                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                 android:textColor="#E9F2FF" />
@@ -44,7 +44,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -53,7 +53,7 @@
                     android:background="@drawable/bg_support_badge"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="8dp"
-                    android:text="Paste"
+                    android:text="@string/universal_badge_paste"
                     android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                     android:textColor="@android:color/white" />
 
@@ -64,7 +64,7 @@
                     android:background="@drawable/bg_support_badge"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="8dp"
-                    android:text="Detect"
+                    android:text="@string/universal_badge_preview"
                     android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                     android:textColor="@android:color/white" />
 
@@ -75,18 +75,10 @@
                     android:background="@drawable/bg_support_badge"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="8dp"
-                    android:text="Download"
+                    android:text="@string/universal_badge_download"
                     android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                     android:textColor="@android:color/white" />
             </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:text="Instagram, TikTok, X, YouTube, Facebook ve Pinterest linklerini ayni akista isler."
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:textColor="#D9E8FF" />
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
@@ -108,17 +100,9 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Link"
+                    android:text="@string/universal_link_title"
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                     android:textColor="@color/text_primary" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Bir link yapistir veya baska bir uygulamadan paylas. Uygulama platformu algilar ve indirilebilir kaliteyi hazirlar."
-                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="@color/text_secondary" />
 
                 <LinearLayout
                     android:id="@+id/platform_indicator"
@@ -148,12 +132,12 @@
                         android:layout_weight="1"
                         android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                         android:textColor="@color/text_primary"
-                        tools:text="Instagram algilandi" />
+                        tools:text="Instagram algılandı" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Auto"
+                        android:text="@string/universal_indicator_ready"
                         android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
                         android:textColor="@color/primary" />
                 </LinearLayout>
@@ -171,10 +155,10 @@
                         android:id="@+id/url_input"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textUri"
                         android:imeOptions="actionDone"
-                        android:maxLines="3"
-                        android:minHeight="88dp"
+                        android:inputType="textUri"
+                        android:maxLines="4"
+                        android:minHeight="74dp"
                         android:textColor="@color/text_primary"
                         android:textColorHint="@color/text_hint" />
 
@@ -237,12 +221,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:visibility="gone"
             app:cardBackgroundColor="@color/card_background"
             app:cardCornerRadius="28dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/divider"
             app:strokeWidth="1dp"
-            android:visibility="gone"
             tools:visibility="visible">
 
             <LinearLayout
@@ -301,7 +285,7 @@
                         android:maxLines="2"
                         android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                         android:textColor="@color/text_primary"
-                        tools:text="Amazing video title here" />
+                        tools:text="Örnek video başlığı" />
 
                     <TextView
                         android:id="@+id/video_author"
@@ -310,7 +294,7 @@
                         android:layout_marginTop="6dp"
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="@color/text_secondary"
-                        tools:text="@creator_name" />
+                        tools:text="@icerik_uretici" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/filename_input_layout"
@@ -352,7 +336,7 @@
                         android:layout_marginTop="10dp"
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="@color/text_secondary"
-                        tools:text="Hazir. Secilen kalite indirilmeye uygun." />
+                        tools:text="Hazır. Seçilen kalite indirilmeye uygun." />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_download"
@@ -368,79 +352,80 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:background="@drawable/bg_soft_panel"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Supported apps"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                android:textColor="@color/text_primary" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Share-sheet ile link gonder, yapistir veya panodan otomatik doldur."
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:textColor="@color/text_secondary" />
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/divider"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:padding="20dp">
 
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/ic_instagram"
-                    tools:ignore="ContentDescription" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/universal_supported_apps_title"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="@color/text_primary" />
 
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/ic_tiktok"
-                    tools:ignore="ContentDescription" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/ic_twitter"
-                    tools:ignore="ContentDescription" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_margin="8dp"
+                        android:src="@drawable/ic_instagram"
+                        tools:ignore="ContentDescription" />
 
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/ic_youtube"
-                    tools:ignore="ContentDescription" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_margin="8dp"
+                        android:src="@drawable/ic_tiktok"
+                        tools:ignore="ContentDescription" />
 
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/ic_facebook"
-                    tools:ignore="ContentDescription" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_margin="8dp"
+                        android:src="@drawable/ic_twitter"
+                        tools:ignore="ContentDescription" />
 
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/ic_pinterest"
-                    tools:ignore="ContentDescription" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_margin="8dp"
+                        android:src="@drawable/ic_youtube"
+                        tools:ignore="ContentDescription" />
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_margin="8dp"
+                        android:src="@drawable/ic_facebook"
+                        tools:ignore="ContentDescription" />
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_margin="8dp"
+                        android:src="@drawable/ic_pinterest"
+                        tools:ignore="ContentDescription" />
+                </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </ScrollView>

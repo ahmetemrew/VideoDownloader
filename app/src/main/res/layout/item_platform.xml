@@ -70,13 +70,13 @@
             android:layout_marginTop="6dp"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
             android:textColor="@color/text_secondary"
-            tools:text="Reels, posts ve paylasilan linkler" />
+            tools:text="Reels, gönderiler ve paylaşılan bağlantılar" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="Open downloader"
+            android:text="@string/open_downloader"
             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
             android:textColor="@color/primary" />
 

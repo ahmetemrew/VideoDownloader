@@ -1,64 +1,69 @@
 # Video Downloader
 
-Open-source Android video downloader application supporting multiple platforms.
+Birden fazla platformu destekleyen, açık kaynaklı Android video indirme uygulaması.
 
-## ⚠️ Disclaimer
+## Uyarı
 
-**This project is provided for educational purposes only.** 
+**Bu proje yalnızca eğitsel amaçlarla sunulmaktadır.**
 
-The developers of this application are **NOT responsible** for:
-- How users choose to use this software
-- Any copyright infringement or violations of terms of service
-- Any legal consequences resulting from the use of this software
-- Downloaded content or its usage
+Bu uygulamanın geliştiricileri şu konulardan **sorumlu değildir**:
+- Kullanıcıların bu yazılımı nasıl kullandığı
+- Telif hakkı ihlalleri veya hizmet koşulu ihlalleri
+- Bu yazılımın kullanımından doğabilecek hukuki sonuçlar
+- İndirilen içerikler ve bu içeriklerin kullanım şekli
 
-**Users are solely responsible for ensuring their use of this application complies with:**
-- Local laws and regulations
-- Terms of service of the platforms they download from
-- Copyright and intellectual property rights
+**Kullanıcılar, uygulamayı kullanırken şunlara uygun hareket etmekten tamamen kendileri sorumludur:**
+- Yerel yasalar ve yönetmelikler
+- İçerik indirilen platformların hizmet koşulları
+- Telif hakkı ve fikri mülkiyet kuralları
 
-**By using this software, you agree that you will only download content that you have the legal right to download.**
+**Bu yazılımı kullanarak, yalnızca indirmeye hukuken hakkınız olan içerikleri indireceğinizi kabul etmiş olursunuz.**
 
 ---
 
-## 📱 Features
+## Özellikler
 
-- 🔗 **Smart Link Detection** - Supports Instagram, TikTok, Twitter/X, YouTube, Facebook, Pinterest
-- 📥 **Queue System** - Download multiple videos simultaneously (max 2 concurrent)
-- 🔔 **Notifications** - Progress, completion, and failure notifications
-- 🎨 **Dark Theme** - Modern Material 3 dark UI
-- 🔒 **Privacy Focused** - No ads, no tracking, no data collection
-- 📴 **Offline Processing** - All operations happen on-device
+- **Akıllı bağlantı algılama** - Instagram, TikTok, Twitter/X, YouTube, Facebook ve Pinterest bağlantılarını tanır
+- **Kuyruk sistemi** - Aynı anda birden fazla videoyu indirebilir, en fazla 2 indirmeyi eşzamanlı çalıştırır
+- **Bildirimler** - İlerleme, tamamlanma ve hata durumlarını bildirir
+- **Gizlilik odaklı** - Reklam, takip ve veri toplama içermez
+- **Çevrimdışı işleme** - İşlerin tamamı cihaz üzerinde gerçekleşir
 
-## 🛠️ Tech Stack
+## Teknoloji Yığını
 
-- **Language:** Kotlin
-- **Architecture:** MVVM
-- **Database:** Room
-- **Networking:** OkHttp + Jsoup
-- **UI:** Material 3, Navigation Component
-- **Async:** Kotlin Coroutines
+- **Dil:** Kotlin
+- **Mimari:** MVVM
+- **Veritabanı:** Room
+- **Ağ katmanı:** OkHttp + Jsoup
+- **Arayüz:** Material 3, Navigation Component
+- **Asenkron işler:** Kotlin Coroutines
 
-## 📦 Building
+## Derleme
 
 ```bash
-# Clone the repository
+# Depoyu klonlayın
 git clone https://github.com/ahmetemrew/VideoDownloader.git
 
-# Open in Android Studio and build
+# Android Studio ile açın veya komut satırından debug derlemesi alın
 ./gradlew assembleDebug
 ```
 
-## 📄 License
+Arm64 release APK üretmek için:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```bash
+./gradlew assembleRelease -PappAbiFilters=arm64-v8a
+```
 
-## 🤝 Contributing
+## Lisans
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Bu proje MIT Lisansı ile lisanslanmıştır. Ayrıntılar için [LICENSE](LICENSE) dosyasına bakabilirsiniz.
 
-## ⚖️ Legal
+## Katkı
 
-This application does not host any copyrighted content. It merely provides a tool for users to download publicly available content. The responsibility for the usage of downloaded content lies entirely with the user.
+Katkılar memnuniyetle karşılanır. İsterseniz bir Pull Request gönderebilirsiniz.
 
-**Use responsibly and legally.**
+## Hukuki Not
+
+Bu uygulama telif hakkıyla korunan herhangi bir içeriği barındırmaz. Uygulama yalnızca herkese açık içeriklerin indirilebilmesi için bir araç sunar. İndirilen içeriklerin nasıl kullanıldığına dair tüm sorumluluk kullanıcıya aittir.
+
+**Lütfen sorumlu ve yasal şekilde kullanın.**

@@ -111,8 +111,8 @@ class DownloadsFragment : Fragment() {
         loadJob?.cancel()
         loadJob = viewLifecycleOwner.lifecycleScope.launch {
             val flow = when (currentTab) {
-                0 -> downloadRepository.getCompletedDownloads()
-                1 -> downloadRepository.getActiveDownloads()
+                0 -> downloadRepository.getActiveDownloads()
+                1 -> downloadRepository.getCompletedDownloads()
                 2 -> downloadRepository.getFailedDownloads()
                 else -> downloadRepository.getAllDownloads()
             }
@@ -201,7 +201,9 @@ class DownloadsFragment : Fragment() {
     private fun confirmDelete(download: DownloadItem) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.dialog_delete_title)
-            .setMessage("\"${download.customFileName}\" silinecek.")
+            .setMessage(
+                getString(R.string.dialog_delete_download_message, download.customFileName)
+            )
             .setPositiveButton(R.string.action_delete) { _, _ ->
                 deleteDownload(download)
             }
@@ -372,7 +374,7 @@ class DownloadAdapter(
                     DownloadStatus.PAUSED -> {
                         statusCompleted.isVisible = false
                         progressText.isVisible = true
-                        progressText.text = "Pause"
+                        progressText.text = root.context.getString(R.string.status_paused)
                         statusFailed.isVisible = false
                         progressBar.isVisible = true
                         progressBar.isIndeterminate = false

@@ -29,31 +29,23 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_hero_card"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:padding="22dp">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/platforms_title"
-                    android:textAppearance="@style/TextAppearance.Material3.DisplaySmall"
+                    android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
                     android:textColor="@android:color/white"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="8dp"
                     android:text="@string/platforms_subtitle"
                     android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                     android:textColor="#E9F2FF" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:text="@string/bulk_screen_hint"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="#D9E8FF" />
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -79,14 +71,6 @@
                         android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                         android:textColor="@color/text_primary" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/bulk_input_subtitle"
-                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                        android:textColor="@color/text_secondary" />
-
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.VideoDownloader.TextInput"
                         android:layout_width="match_parent"
@@ -101,8 +85,8 @@
                             android:gravity="top|start"
                             android:imeOptions="actionDone"
                             android:inputType="textMultiLine|textUri"
-                            android:maxLines="5"
-                            android:minHeight="112dp"
+                            android:maxLines="4"
+                            android:minHeight="92dp"
                             android:textColor="@color/text_primary"
                             android:textColorHint="@color/text_hint"
                             tools:text="https://www.youtube.com/watch?v=dQw4w9WgXcQ&#10;https://www.tiktok.com/@user/video/1234567890" />
@@ -148,7 +132,7 @@
                         android:layout_marginTop="6dp"
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="@color/text_secondary"
-                        tools:text="3 link hazır" />
+                        tools:text="3 bağlantı hazır" />
 
                     <TextView
                         android:id="@+id/empty_pending_text"
@@ -227,14 +211,6 @@
                 android:text="@string/bulk_status_title"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                 android:textColor="@color/text_primary" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/bulk_status_subtitle"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:textColor="@color/text_secondary" />
 
             <TextView
                 android:id="@+id/batch_state_summary"

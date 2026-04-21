@@ -35,7 +35,7 @@ class DownloadService : Service() {
     companion object {
         const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "download_service"
-        private const val CHANNEL_NAME = "Indirme servisi"
+        private const val CHANNEL_NAME = "İndirme servisi"
 
         private const val ACTION_PROCESS_QUEUE = "com.basitce.videodownloader.action.PROCESS_QUEUE"
         private const val ACTION_CANCEL_DOWNLOAD = "com.basitce.videodownloader.action.CANCEL_DOWNLOAD"
@@ -159,7 +159,12 @@ class DownloadService : Service() {
                     progress = item.progress.coerceIn(0, 99),
                     clearError = true
                 )
-                NotificationHelper.showDownloadProgress(this@DownloadService, item.id, item.customFileName, item.progress)
+                NotificationHelper.showDownloadProgress(
+                    this@DownloadService,
+                    item.id,
+                    item.customFileName,
+                    item.progress
+                )
 
                 val result = videoDownloader.downloadVideo(
                     sourceUrl = item.originalUrl,
@@ -215,10 +220,10 @@ class DownloadService : Service() {
                         errorMessage
                     )
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 terminalStateReached.set(true)
                 lastProgressJob?.join()
-                downloadRepository.markFailed(item.id, "Iptal edildi")
+                downloadRepository.markFailed(item.id, "İptal edildi")
                 NotificationHelper.cancelNotification(this@DownloadService, item.id)
             } catch (e: Exception) {
                 terminalStateReached.set(true)
@@ -243,7 +248,7 @@ class DownloadService : Service() {
     private fun cancelDownload(downloadId: Long) {
         activeJobs.remove(downloadId)?.cancel()
         serviceScope.launch {
-            downloadRepository.markFailed(downloadId, "Iptal edildi")
+            downloadRepository.markFailed(downloadId, "İptal edildi")
             NotificationHelper.cancelNotification(this@DownloadService, downloadId)
             updateForegroundNotification()
             stopIfIdle()
@@ -301,11 +306,11 @@ class DownloadService : Service() {
             activeCount > 0 && queuedCount > 0 -> "$activeCount indiriliyor, $queuedCount bekliyor"
             activeCount > 0 -> "$activeCount aktif indirme"
             queuedCount > 0 -> "$queuedCount kuyrukta"
-            else -> "Indirmeler tamamlanmak uzere"
+            else -> "İndirmeler tamamlanmak üzere"
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Video Downloader")
+            .setContentTitle("Video İndirici")
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_download)
             .setOngoing(true)

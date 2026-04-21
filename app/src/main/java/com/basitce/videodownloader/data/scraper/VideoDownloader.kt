@@ -88,7 +88,7 @@ class VideoDownloader(private val context: Context) {
                         val downloadedFile = outputDir.listFiles()
                             ?.filter { it.isFile && it.name.startsWith(safeFileStem) }
                             ?.maxByOrNull { it.lastModified() }
-                            ?: throw IllegalStateException("Indirilen dosya bulunamadi")
+                            ?: throw IllegalStateException("İndirilen dosya bulunamadı")
 
                         onProgress(100)
                         return@withContext Result.success(
@@ -98,7 +98,7 @@ class VideoDownloader(private val context: Context) {
                             )
                         )
                     } catch (e: YoutubeDL.CanceledException) {
-                        throw CancellationException("Indirme iptal edildi", e)
+                        throw CancellationException("İndirme iptal edildi", e)
                     } catch (e: Exception) {
                         lastError = e
                     }
@@ -120,7 +120,7 @@ class VideoDownloader(private val context: Context) {
                     )
                 }
 
-                Result.failure(lastError ?: IllegalStateException("Indirme basarisiz oldu"))
+                Result.failure(lastError ?: IllegalStateException("İndirme başarısız oldu"))
             } finally {
                 cancelHandler.dispose()
             }

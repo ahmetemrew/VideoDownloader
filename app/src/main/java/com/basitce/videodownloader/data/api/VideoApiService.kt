@@ -1,69 +1,63 @@
 package com.basitce.videodownloader.data.api
 
 import com.basitce.videodownloader.data.LinkResolver
-import com.basitce.videodownloader.data.model.*
+import com.basitce.videodownloader.data.model.AvailableQuality
+import com.basitce.videodownloader.data.model.Platform
+import com.basitce.videodownloader.data.model.VideoInfo
+import com.basitce.videodownloader.data.model.VideoQuality
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 /**
- * Video bilgisi almak için Mock API servisi
- * Gerçek API entegrasyonu için bu sınıf değiştirilecek
+ * Video bilgisi almak için kullanılan örnek API servisi.
+ * Gerçek API entegrasyonu için bu sınıf değiştirilecektir.
  */
 object VideoApiService {
 
     /**
-     * URL'den video bilgisi alır
-     * @return VideoInfo veya null (başarısız olursa)
+     * URL'den video bilgisi alır.
      */
     suspend fun fetchVideoInfo(url: String): Result<VideoInfo> {
-        // URL'yi analiz et
         val resolved = LinkResolver.resolve(url)
-        
+
         if (!resolved.isValid) {
             return Result.failure(Exception("Desteklenmeyen veya geçersiz URL"))
         }
 
-        // Simüle edilmiş API gecikmesi
         delay(Random.nextLong(500, 1500))
 
-        // Mock video verisi oluştur
         val videoInfo = generateMockVideoInfo(resolved)
         return Result.success(videoInfo)
     }
 
     /**
-     * Test ve demo için mock video bilgisi oluşturur
+     * Test ve demo için örnek video bilgisi oluşturur.
      */
     private fun generateMockVideoInfo(resolved: LinkResolver.ResolveResult): VideoInfo {
         val platform = resolved.platform
         val videoId = resolved.videoId ?: "unknown_${System.currentTimeMillis()}"
-        
-        // Platform bazlı örnek başlıklar
+
         val title = when (platform) {
-            Platform.INSTAGRAM -> "Instagram Video #${videoId.take(6)}"
-            Platform.TIKTOK -> "TikTok - Viral Video 🔥"
-            Platform.TWITTER -> "X/Twitter Video Post"
-            Platform.YOUTUBE -> "YouTube Video - Amazing Content"
-            Platform.FACEBOOK -> "Facebook Watch Video"
-            Platform.PINTEREST -> "Pinterest Video Pin"
+            Platform.INSTAGRAM -> "Instagram videosu #${videoId.take(6)}"
+            Platform.TIKTOK -> "TikTok videosu"
+            Platform.TWITTER -> "X gönderi videosu"
+            Platform.YOUTUBE -> "YouTube videosu"
+            Platform.FACEBOOK -> "Facebook Watch videosu"
+            Platform.PINTEREST -> "Pinterest video pini"
             Platform.UNKNOWN -> "Video"
         }
 
-        // Platform bazlı örnek kullanıcı adları
         val author = when (platform) {
-            Platform.INSTAGRAM -> "@instagram_user"
-            Platform.TIKTOK -> "@tiktok_creator"
-            Platform.TWITTER -> "@twitter_user"
-            Platform.YOUTUBE -> "YouTube Channel"
-            Platform.FACEBOOK -> "Facebook Page"
-            Platform.PINTEREST -> "Pinterest Pinner"
-            Platform.UNKNOWN -> "Unknown"
+            Platform.INSTAGRAM -> "@instagram_kullanici"
+            Platform.TIKTOK -> "@tiktok_uretici"
+            Platform.TWITTER -> "@x_kullanici"
+            Platform.YOUTUBE -> "YouTube kanalı"
+            Platform.FACEBOOK -> "Facebook sayfası"
+            Platform.PINTEREST -> "Pinterest profili"
+            Platform.UNKNOWN -> "Bilinmiyor"
         }
 
-        // Rastgele süre (10 saniye - 10 dakika)
         val duration = Random.nextLong(10, 600)
-
-        // Mevcut kalite seçenekleri oluştur
         val availableQualities = generateMockQualities(platform)
 
         return VideoInfo(
@@ -71,8 +65,8 @@ object VideoApiService {
             url = resolved.cleanUrl,
             platform = platform,
             title = title,
-            description = "Bu video $platform platformundan indirildi.",
-            thumbnailUrl = "https://picsum.photos/seed/$videoId/640/360", // Placeholder görsel
+            description = "Bu video ${platform.displayName} platformundan alındı.",
+            thumbnailUrl = "https://picsum.photos/seed/$videoId/640/360",
             duration = duration,
             author = author,
             authorAvatarUrl = "https://picsum.photos/seed/${author}/100/100",
@@ -81,7 +75,7 @@ object VideoApiService {
     }
 
     /**
-     * Platform bazlı mevcut kalite seçenekleri oluşturur
+     * Platform bazlı mevcut kalite seçenekleri oluşturur.
      */
     private fun generateMockQualities(platform: Platform): List<AvailableQuality> {
         val baseQualities = when (platform) {
@@ -106,18 +100,16 @@ object VideoApiService {
         }
 
         return baseQualities.map { quality ->
-            // Kaliteye göre tahmini dosya boyutu
             val baseSize = when (quality) {
-                VideoQuality.QUALITY_4K -> 500_000_000L // ~500MB
+                VideoQuality.QUALITY_4K -> 500_000_000L
                 VideoQuality.QUALITY_1440P -> 250_000_000L
-                VideoQuality.QUALITY_1080P -> 100_000_000L // ~100MB
-                VideoQuality.QUALITY_720P -> 50_000_000L // ~50MB
+                VideoQuality.QUALITY_1080P -> 100_000_000L
+                VideoQuality.QUALITY_720P -> 50_000_000L
                 VideoQuality.QUALITY_480P -> 25_000_000L
                 VideoQuality.QUALITY_360P -> 15_000_000L
                 VideoQuality.QUALITY_AUDIO_ONLY -> 5_000_000L
             }
-            
-            // Biraz rastgelelik ekle
+
             val fileSize = baseSize + Random.nextLong(-baseSize / 4, baseSize / 4)
 
             AvailableQuality(

@@ -1,12 +1,12 @@
 package com.basitce.videodownloader.data.model
 
 /**
- * Video kalite seçenekleri
+ * Video kalite seçenekleri.
  */
 enum class VideoQuality(
     val label: String,
     val resolution: String,
-    val priority: Int // Düşük = daha iyi kalite
+    val priority: Int
 ) {
     QUALITY_4K("4K Ultra HD", "2160p", 1),
     QUALITY_1440P("2K QHD", "1440p", 2),
@@ -14,7 +14,7 @@ enum class VideoQuality(
     QUALITY_720P("HD", "720p", 4),
     QUALITY_480P("SD", "480p", 5),
     QUALITY_360P("Düşük", "360p", 6),
-    QUALITY_AUDIO_ONLY("Sadece Ses", "MP3", 10);
+    QUALITY_AUDIO_ONLY("Sadece ses", "MP3", 10);
 
     companion object {
         fun fromResolution(resolution: String): VideoQuality {
@@ -27,21 +27,21 @@ enum class VideoQuality(
 }
 
 /**
- * Belirli bir video için mevcut kalite seçeneği
+ * Belirli bir video için mevcut kalite seçeneği.
  */
 data class AvailableQuality(
     val quality: VideoQuality,
-    val fileSize: Long? = null, // bytes cinsinden
+    val fileSize: Long? = null,
     val url: String,
     val extractorArgs: String? = null,
     val strictSelection: Boolean = false
 ) {
     /**
-     * Okunabilir dosya boyutu döndürür (örn: "12.5 MB")
+     * Okunabilir dosya boyutu döndürür.
      */
     fun getFormattedSize(): String {
         if (fileSize == null) return "Bilinmiyor"
-        
+
         return when {
             fileSize < 1024 -> "$fileSize B"
             fileSize < 1024 * 1024 -> String.format("%.1f KB", fileSize / 1024.0)
