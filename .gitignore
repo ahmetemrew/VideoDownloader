@@ -29,3 +29,4 @@ google-services.json
 # Local configuration
 local.properties
 secrets.properties
+.ci/
